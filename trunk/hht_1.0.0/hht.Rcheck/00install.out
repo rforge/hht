@@ -1,0 +1,16 @@
+[1] "R you ready?!"
+* installing *source* package ‘hht’ ...
+** R
+** data
+** inst
+** preparing package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+   ‘eemd_examples.Rnw’ 
+   ‘interesting_signals.Rnw’ 
+** testing if installed package can be loaded
+[1] "R you ready?!"
+
+* DONE (hht)

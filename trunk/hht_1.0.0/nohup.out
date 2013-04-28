@@ -1,0 +1,79 @@
+[1] "R you ready?!"
+* using log directory ‘/home/bowman/research/hht/programs/trunk/R/package/hht.Rcheck’
+* using R version 2.15.1 (2012-06-22)
+* using platform: x86_64-unknown-linux-gnu (64-bit)
+* using session charset: UTF-8
+* checking for file ‘hht/DESCRIPTION’ ... OK
+* checking extension type ... Package
+* this is package ‘hht’ version ‘1.0.0’
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking whether package ‘hht’ can be installed ... OK
+* checking installed package size ... NOTE
+  installed size is  5.4Mb
+  sub-directories of 1Mb or more:
+    data   5.2Mb
+* checking package directory ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking DESCRIPTION meta-information ... OK
+* checking top-level files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking R files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking for unstated dependencies in R code ... OK
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... NOTE
+eemd_compile: no visible binding for global variable ‘emd_result’
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking contents of ‘data’ directory ... OK
+*
+qchecking data for non-ASCII characters ... OK
+* checking data for ASCII and uncompressed saves ... WARNING
+  
+  Note: significantly better compression could be obtained
+        by using R CMD build --resave-data
+                          old_size new_size compress
+  port_foster_eemd.RData     3.3Mb    2.9Mb       xz
+  port_foster_event.RData     14Kb     12Kb       xz
+  port_foster_spec.RData     1.9Mb    1.5Mb    bzip2
+* checking installed files from ‘inst/doc’ ... OK
+* checking examples ... OK
+* checking for unstated dependencies in vignettes ... OK
+* checking package vignettes in ‘inst/doc’ ... WARNING
+Package vignette(s) without corresponding PDF:
+   ‘eemd_examples.Rnw’
+   ‘interesting_signals.Rnw’
+
+* checking running R code from vignettes ...
+   ‘eemd_examples.Rnw’ ... OK
+   ‘interesting_signals.Rnw’ ... OK
+ OK
+* checking re-building of vignette PDFs ... OK
+* checking PDF version of manual ... OK
+
+WARNING: There were 2 warnings.
+NOTE: There were 2 notes.
+See
+  ‘/home/bowman/research/hht/programs/trunk/R/package/hht.Rcheck/00check.log’
+for details.
+
+[1] "R you ready?!"

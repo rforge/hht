@@ -1,0 +1,16 @@
+combine_trials          Gather trial files
+dcb_emd                 Empirical Mode Decomposition
+dcb_extractimf          Intrinsic Mode Function
+dt                      Ocean Bottom Seismometer Sample Rate
+eemd                    Ensemble Empirical Mode Decomposition
+eemd_compile            Process EEMD results
+eemd_resift             Resift averaged IMFs from EEMD
+evolutive_fft           Generate Fourier spectrogram
+ftspec_image            Display Fourier spectrogram
+hh_render               Render Hilbert spectrogram
+hhspec_image            Display Hilbert Huang spectrogram
+hhtransform             Hilbert transform wrapper
+plot_imfs               Display IMFs
+sig                     Transitory Seismic Event at Deception Island
+                        Volcano
+sig2imf                 Empirical Mode Decomposition wrapper

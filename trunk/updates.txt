@@ -1,0 +1,21 @@
+Things to change in next version
+1.  Be able to change plotting parameters (text size, etc) in plotting functions
+2.  User defined color maps for plotting functions
+3.  Maybe a 3d plotting function?
+4.  Maybe a contour plotting function?
+5.  Get Jonathan to change evolfft so that you can make it not adjust.
+6.  Fix Figure 3 in the EEMD vignette - most of the signal is missing!
+7.  Make it possible to change the resolution of hspec without having to
+rerender the spectrogram.  Or just see if there's a way to speed up
+hhspec_render.
+8.  Add marginal spectrum option.
+9.  Update hh_render so that it returns separate IMFs.
+10.  Make the "pretty" option not screw up the time series by making the end
+time longer than it should be. Sometimes it scales a 25 second signal to have
+an end time of 26, which causes big problems later 
+11.  Make sure 'par' is returned in image renderers where it is changed
+12.  Make axes editable
+13.  Check out as.image() in the fields package
+	14.  Make spectrogram able to discretize time.
+Things that were changed
+-updated hhspec_image to return image on request
