@@ -491,7 +491,7 @@ ftspec_image <- function(sig, dt, ft, time_span, freq_span, amp_span, amp_units=
         tind=seq_len((time_span[2]-time_span[1])/dt)+(time_span[1])/dt
 
         par(mai=c(0.1, 0.1, 0.1, 0.1))
-        plot(c(-0.15,1),c(-0.15,1),type="n",axes=FALSE,xlab="", ylab="") # Set up main plot window
+        plot(c(-0.15,1),c(-0.15,1),type="n",axes=FALSE,xlab="", ylab="") # Set up opts$main plot window
         par(mai=c(0.1, 0.1, 0.1, 0.1))
 
         sig=sig[tind]*amp_unit_conversion
@@ -579,11 +579,11 @@ ftspec_image <- function(sig, dt, ft, time_span, freq_span, amp_span, amp_units=
         }
 
         #Plot TEXT
-        text(trace_x + trace_xspan + 0.03, trace_y, srt=90, sprintf(trace_format,trace_labels[1]), cex=ampcex)
-        text(trace_x + trace_xspan + 0.03, trace_y+trace_yspan, srt=90, sprintf(trace_format, trace_labels[2]), cex=ampcex)
+        text(trace_x + trace_xspan + 0.03, trace_y, srt=90, sprintf(opts$trace_format,trace_labels[1]), cex=ampcex)
+        text(trace_x + trace_xspan + 0.03, trace_y+trace_yspan, srt=90, sprintf(opts$trace_format, trace_labels[2]), cex=ampcex)
 	text(image_x-0.095, image_y+image_yspan/2, srt=90, "Frequency", cex=cex)
         text(image_x+image_xspan/2, image_y-0.1, "Time (s)", cex=cex)
-        text(trace_x+trace_xspan/2, trace_y+trace_yspan+0.05,main, cex=cex)
+        text(trace_x+trace_xspan/2, trace_y+trace_yspan+0.05,opts$main, cex=cex)
         
         if(!is.null(amp_units))
         {
@@ -597,7 +597,7 @@ ftspec_image <- function(sig, dt, ft, time_span, freq_span, amp_span, amp_units=
 
 }		
 
-hh_render <- function(hres, dt, df, freq_span = NULL)
+hh_render <- function(hres, dt, dfreq, freq_span = NULL, verbose = TRUE)
 {
 	#Renders a spectrogram of EMD or Ensemble EMD (EEMD) results.
 	#INPUTS
@@ -607,6 +607,7 @@ hh_render <- function(hres, dt, df, freq_span = NULL)
         #       this prevents subsample resolution.
         #       DFREQ is the frequency resolution of the spectrogram
         #       FREQ_SPAN is the frequency range to calculate the spectrum over c(MIN, MAX).  NULL means capture the full frequency spectrum of the signal.
+        #       VERBOSE prints out status messages (i.e. IMF 1 COMPLETE!)
 	#OUTPUTS
 	#	HSPEC is a spectrogram matrix ready to be plotted by HHSPEC_IMAGE
 	#Danny Bowman
@@ -655,11 +656,11 @@ hh_render <- function(hres, dt, df, freq_span = NULL)
         {
             tt = hres$tt
         }
- 
-	hspec=c()
+        
+        hspec = hres
         grid = list()
         grid$x = tt
-        grid$y = seq(from = freq_span[1], to = freq_span[2], length.out = y_len)
+        grid$y = seq(from = freq_span[1], to = freq_span[2] + dfreq, by = dfreq)
         hspec$z=array(rep(0,(length(grid$x) * length(grid$y) * hres$nimf)),dim=c(length(grid$x),length(grid$y), hres$nimf))
         hspec$cluster=hspec$z #Shows how many times a given grid node has data.
         for(i in seq(hres$nimf))
@@ -668,7 +669,12 @@ hh_render <- function(hres, dt, df, freq_span = NULL)
             imf_img = as.image(hres$hamp[,i,], grid = grid, x = x)
             hspec$z[,,i] = imf_img$z
             hspec$cluster[,,i] = imf_img$weights
+            if(verbose)
+            {
+                print(paste("IMF", i, "COMPLETE!"))
+            }
         }
+        
         hspec$z[is.na(hspec$z)] = 0
         hspec$cluster[is.na(hspec$cluster)] = 0
         hspec$x = imf_img$x 
@@ -677,12 +683,11 @@ hh_render <- function(hres, dt, df, freq_span = NULL)
 	hspec$original_signal=hres$original_signal
 	hspec$dfreq=dfreq
 	hspec$dt=hres$dt
+        hspec$tt = hres$tt
 	invisible(hspec) #Return the spectrogram structure.
 }
 
-
-	
-hhspec_image <- function(hspec,time_span,freq_span, amp_span,cluster_span=NULL, amp_units=NULL, amp_unit_conversion=NULL, grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=TRUE, cex=1, trace_format = "%1.1e", main="")
+hhspec_image <- function(hspec,time_span,freq_span, amp_span, cluster_span=NULL, imf_list = NULL, imf_trace = FALSE, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=FALSE, ...)
 {
 	#Plots a spectrogram of the EEMD processed signal as an image.	
 	#INPUTS
@@ -694,44 +699,73 @@ hhspec_image <- function(hspec,time_span,freq_span, amp_span,cluster_span=NULL, 
 	#		The more often the signal is recorded, the more likely it is that the signal is real and not noise
 	#		HSPEC$TRIALS is the number of times EEMD was run to generate signal
 	#		HSPEC$ORIGINAL_SIGNAL is the original seismogram (without added noise)
-	#		HSPEC$MAX_FREQ is the top of the plotted frequency range
-	#		HSPEC$FREQ_STEP is the frequency discretization of the spectrogram
-	#		HSPEC$DT is the sample rate
+        #               HSPEC$TT is the sample times
 	#	TIME_SPAN is the time span to plot, [0,-1] plots everything
 	#	FREQ_SPAN is the frequency span to plot (<=max frequency in spectrogram), [0,-1] plots everything
 	#	AMP_SPAN is the amplitude span to plot, everything below is set to black, everything above is set to max color, [0, -1] scales to range in signal
 	#	CLUSTER_SPAN plots only the parts of the signal that have a certain number of data points per pixel [AT LEAST, AT MOST] this only applies to EEMD with multiple trials.
-	#	AMP_UNITS is the units of amplitude, used for axes labels
-	#	AMP_UNIT_CONVERSION tells how to convert units in input data to units to display
+        #       IMF_LIST is a list of IMFs to plot on the spectrogram.  If NULL, plot all IMFs.
+        #       IMF_TRACE can be set to show the sum of IMFs shown in the spectrogram plotted as a red line against the original trace
+        #       SCALING determines whether to apply a natural log (ln), logarithmic (log), or square root (sqrt) scaling to the amplitude data
 	#	GRID is a boolean asking whether to display grid lines
 	#	COLORBAR is a boolean asking whether to plot an amplitude colorbar
         #       BACKCOL is a 3 element vector of RGB values for the background of the spectrogram, based on a 0 to 255 scale: [red, green, blue]
         #       COLORMAP is an R palette object determining how the spectrogram colors should look
         #       PRETTY is a boolean asking whether to adjust axis labels so that they're pretty (TRUE) or give the exactly specified time and frequency intervals (FALSE)
-        #	CEX is character size for labels and titles
-        #       TRACE_FORMAT is the number format of the trace amplitude labels
-        #	MAIN is the title of the plot.
-	#
+	#OPTIONAL PARAMETERS
+        #       TRACE_FORMAT is the format of the trace minima and maxima in sprintf format
+        #       IMG_X_FORMAT is the format of the X axis labels of the image in sprintf format
+        #       IMG_Y_FORMAT is the format of the Y axis labels of the image in sprintf format
+        #       COLORBAR_FORMAT is the format of the colorbar labels in sprintf format   
+        #       CEX.LAB is the font size of the image axis labels
+        #       CEX.COLORBAR is the font size of the colorbar
+        #       CEX.TRACE is the font size of the trace axis labels
+
 	#OUTPUTS
 	#	HHIMAGE is the result of the requested spectrogram subsetting.
 
 
-        options(digits.secs=3)
-	
+        opts = list(...)
+
+        #Subset by IMFs
+        if(is.null(imf_list))
+        {
+            imf_list = seq(hspec$nimf)
+        }
+        else
+        {
+            if(max(imf_list) > hspec$nimf)
+            {
+                warning("Requested more IMFs than are present in the actual EMD results!")
+                imf_list = imf_list[imf_list < hspec$nimf]
+            }
+        }   
+   
+        img = list()
+        img$z = apply(hspec$z[,,imf_list], c(1, 2), sum)
+        img$x = hspec$x
+        img$y = hspec$y
+        cluster = apply(hspec$cluster[,,imf_list], c(1, 2), sum)
+        
+        if(!is.null(cluster_span))
+        {
+            img$z[cluster >= cluster_span[1] & cluster <= cluster_span[2]] = NA
+        } 
+ 
 	if(time_span[2]<0)
 	{
-		time_span[2]=length(hspec$original_signal)*hspec$dt
+		time_span[2]=max(hspec$tt)
 	}
 	
-	if(time_span[2]>length(hspec$original_signal)*hspec$dt)
+	if(time_span[2]>max(hspec$tt)
 	{
-		time_span[2]=length(hspec$original_signal)*hspec$dt
+		time_span[2]=max(hspec$tt)
 		warning("Requested time window is longer than the actual signal.")
 	}
 	
 	if(freq_span[2]<0)
 	{
-		freq_span[2]=hspec$max_freq
+		freq_span[2]=max(hspec$hinstfreq)
 	}
 	if(freq_span[2]>hspec$max_freq)
 	{
@@ -739,143 +773,222 @@ hhspec_image <- function(hspec,time_span,freq_span, amp_span,cluster_span=NULL, 
 		warning("Requested frequency window is higher than maximum frequency in the spectrogram.")
 	}
 
-	if(is.null(amp_unit_conversion))
-	{
-		amp_unit_conversion=1
-	}
-	
-        if(is.null(colormap))
+        imf_sum = rowSums(hspec$averaged_imfs[hspec$x >= time_span[1] & hspec$x <= time_span[2], imf_list])
+        img = list()
+        img$z = apply(hspec$z[hspec$x >= time_span[1] & hspec$x <= time_span[2], hspec$y >= freq_span[1] & hspec$y <= freq_span[2],imf_list], c(1, 2), sum)
+        img$x = hspec$x[hspec$x >= time_span[1] & hspec$x <= time_span[2]]
+        img$y = hspec$y[hspec$y >= freq_span[1] & hspec$y <= freq_span[2]]
+        cluster = apply(hspec$cluster[hspec$x >= time_span[1] & hspec$x <= time_span[2], hspec$y >= freq_span[1] & hspec$y <= freq_span[2],imf_list], c(1, 2), sum)
+
+        if(!is.null(cluster_span))
         {
-            colormap=rainbow(500,start=0,end=5/6)
+            img$z[cluster <= cluster_span[1] |  cluster >= cluster_span[2]] = NA
         }
 
-        colorbins=length(colormap) 
-	
-	if(pretty)
+        img$z[img$z == 0] = NA
+
+        if(scaling == "ln") #Scale by natural log
         {
-            time_labels=pretty(seq(0,time_span[2]-time_span[1],length.out=10)+time_span[1], n=10)
-            freq_labels=pretty(seq(freq_span[1],freq_span[2],length.out=5), n=5)
-            time_span=c(min(time_labels), max(time_labels))
-            freq_span=c(min(freq_labels), max(freq_labels))
-        }
-        else
-        {
-           time_labels=format(seq(0,time_span[2]-time_span[1],length.out=10)+time_span[1],digits=2)
-           freq_labels=format(seq(freq_span[1],freq_span[2],length.out=5), digits=2)
+            img$z = log(img$z)
         }
 
-	f_ind=seq_len((freq_span[2]-freq_span[1])/hspec$freq_step)+(freq_span[1]/hspec$freq_step)
-        tind=seq_len((time_span[2]-time_span[1])/hspec$dt)+(time_span[1])/hspec$dt
-	
-	clustermatrix=hspec$cluster[tind,f_ind]
-	image_z=hspec$z[tind,f_ind]*amp_unit_conversion
-	if(!is.null(cluster_span))
-	{
-		image_z[clustermatrix<cluster_span[1] | clustermatrix>cluster_span[2]]=NaN
-	}
-	image_z=image_z/clustermatrix #Scale by number of times bin got values
-	if(amp_span[2]<0)
-	{
-		amp_span[2]=max(image_z[!is.nan(image_z)])
-	}
-	image_z[image_z<amp_span[1]]=NA
-	image_z[image_z>amp_span[2]]=amp_span[2]
-	image_z[1,1]=amp_span[2]
-	maintitle=paste(hspec$network,"Station",hspec$STN,"Component",hspec$COMP,"Original Signal")
-	par(mai=c(0.1, 0.1, 0.1, 0.1))
-	plot(c(-0.15,1),c(-0.15,1),type="n",axes=FALSE,xlab="", ylab="") # Set up main plot window
-	par(mai=c(0.1, 0.1, 0.1, 0.1))
-	
-	ampcex=0.5*cex
-
-	#Plot TRACE
-	
-        xt=hspec$original_signal[tind]*amp_unit_conversion
-        tt=tind*hspec$dt-time_span[1]
-	trace_y=0.75
-	trace_x=0
-	trace_yspan=0.10
-	trace_xspan=0.9
-	trace_at=seq(trace_y,trace_y+trace_yspan,length.out=2)
-	trace_labels=c(min(xt), max(xt))
-	trace_scale=trace_yspan/(max(xt)-min(xt))
-	tt_scale=trace_xspan/max(tt)
-	axis(4,pos=trace_x+trace_xspan,at=trace_at, labels=c("",""), cex.axis=ampcex)
-	lines((tt*tt_scale+trace_x), (trace_y+(xt-min(xt))*trace_scale))
-	rect(trace_x, trace_y, trace_x+trace_xspan, trace_y+trace_yspan)
-
-	#Plot IMAGE
-
-	image_y=0
-	image_x=0
-	image_yspan=0.75
-	image_xspan=0.9
-	image_xvec=seq(image_x, image_x+image_xspan, length.out=length(tind))
-	image_yvec=seq(image_y, image_y+image_yspan, length.out=length(f_ind))
-	time_at=seq(image_x,image_x+image_xspan,length.out=length(time_labels))
-	freq_at=seq(image_y,image_y+image_yspan, length.out=length(freq_labels))
-	rect(image_x,image_y,image_x+image_xspan,image_y+image_yspan,col=rgb(red=backcol[1], green=backcol[2], blue=backcol[3], maxColorValue=255))
-	image(image_xvec,image_yvec, image_z, col=colormap,add=TRUE)
-	axis(2, pos=image_x, at=freq_at,labels=freq_labels, cex.axis=cex)
-	axis(1,pos=image_y, at=time_at,labels=time_labels, cex.axis=cex)
-
-
-        #Plot GRID
-	if(grid)
-	{
-        	line_color=rgb(red=100, green=100, blue=100, maxColorValue=255)
-		line_type=3
-        	for(k in 2:(length(time_at)-1))
-        	{
-                	lines(c(time_at[k], time_at[k]), c(image_y, trace_y+trace_yspan), col=line_color, lty=line_type)
-        	}
+        if(scaling == "log") #Log 10 scale
+        {
+            img$z = log10(img$z) 
+        }
+   
+        if(scaling == "sqrt") #Take the square root
+        {
+            img$z = sqrt(img$z)
+        }
         
-        	for(k in 2:(length(freq_at)-1))
-        	{
-                	lines(c(image_x, image_x+image_xspan), c(freq_at[k], freq_at[k]), col=line_color, lty=line_type)
-        	}
-	}
-
-	#Plot COLORBAR
-	
-	if(colorbar)
-	{
-                color_x=image_x+image_xspan+0.015
-        	color_xspan=0.025
-		color_y=image_y+image_yspan-0.20
-        	color_yspan=0.10
-		color_xvec=c(color_x,color_x+color_xspan)
-		color_yvec=seq(color_y, color_y+color_yspan, length.out=colorbins)
-		color_at=seq(color_y,color_y+color_yspan,length.out=2)
-		color_labels=format(seq(amp_span[1],amp_span[2],length.out=2),digits=2)
-		colorbar=array(seq_len(colorbins),dim=c(1, colorbins))
-        	image(color_xvec, color_yvec, colorbar, col=colormap, axes=FALSE, add=TRUE)
-                text(color_x+0.015, color_y-0.0125, format(amp_span[1], digits=2), cex=ampcex)
-                text(color_x+0.015, color_y+color_yspan+0.0125, format(amp_span[2], digits=2), cex=ampcex)
-	}
-	
-	#Plot TEXT
-
-	#text(color_x+color_xspan+0.05,color_y+color_yspan/2,srt=90,paste("Spectrum Amplitude (", amp_units, ")", sep=""))
-	#text(trace_x+trace_xspan+0.05,trace_y+trace_yspan/2,srt=90,paste("Trace Amplitude (", amp_units, ")", sep=""))
-        text(trace_x + trace_xspan + 0.03, trace_y, srt=90, sprintf(trace_format,trace_labels[1]), cex=ampcex)
-        text(trace_x + trace_xspan + 0.03, trace_y+trace_yspan, srt=90, sprintf(trace_format, trace_labels[2]), cex=ampcex)
-	text(image_x-0.095, image_y+image_yspan/2, srt=90, "Frequency", cex=cex)
-	text(image_x+image_xspan/2, image_y-0.1, "Time (s)", cex=cex)
-	text(trace_x+trace_xspan/2, trace_y+trace_yspan+0.05,main, cex=cex)
-	if(!is.null(amp_units))
-	{
-		text(trace_x+trace_xspan/2, trace_y+trace_yspan+0.025,paste("Trace and Spectrogram Amplitudes in",amp_units), cex=ampcex)
-	}
-        invisible(image_z)	
+        hht_package_plotter(img, hspec$original_signal, img_x_lab, img_y_lab, imf_sum, colormap = colormap, backcol = backcol, pretty, grid, colorbar, ...)
 }
-	
+
+hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL, window = NULL, colormap = NULL, backcol = c(0, 0, 0), pretty = FALSE, grid = TRUE, colorbar = TRUE, opts)
+{
+    #Plots images and time series for Hilbert spectra, Fourier spectra, and cluster analysis.
+    #This function is internal to the package and users should not be calling it.
+    #
+    #INPUTS
+    #    IMG is the image portion of the figure
+    #        IMG$X is the columns
+    #        IMG$Y is the rows
+    #        IMG$Z is the image data
+    #    TRACE is the time series to plot at the top of the figure
+    #        TRACE$SIG is the time series
+    #        TRACE$TT is the time of each sample
+    #    IMG_X_LAB is the label of the X axis of the image
+    #    IMG_Y_LAB is the label of the Y axis of the image
+    #    IMF_SUM is a red line on the time series plot showing the sum of the plotted IMFs, if available
+    #        IMF_SUM$SIG is the summed IMFS
+    #        IMF_SUM$TT is the time of each sample.  We assume all IMFS have equivalent timing.
+    #    WINDOW is the length of the Fourier window, if applicable
+    #    COLORMAP is the colormap to use for the image
+    #    BACKCOL is the background color of the image
+    #    PRETTY allows for nice axis labels
+    #    GRID draws a grid on the image
+    #    COLORBAR puts a colorbar corresponding to the range of values on the image
+    #    ... also passes lots of other possible options, such as the label of the axes, etc
+    #
+    #OPTS    OTHER POSSIBLE OPTIONS
+    #    TRACE_FORMAT is the format of the trace minima and maxima in sprintf format
+    #    IMG_X_FORMAT is the format of the X axis labels of the image in sprintf format
+    #    IMG_Y_FORMAT is the format of the Y axis labels of the image in sprintf format
+    #    COLORBAR_FORMAT is the format of the colorbar labels in sprintf format   
+    #    CEX.LAB is the font size of the image axis labels
+    #    CEX.COLORBAR is the font size of the colorbar
+    #    CEX.TRACE is the font size of the trace axis labels
+
+    #Configure parameters
+    
+    if(!"trace_format" %in% names(opts))
+    {
+        opts$trace_format = "%.1e"
+    }
+ 
+    if(!"img_x_format" %in% names(opts))
+    {
+        opts$img_x_format = "%.2f"
+    }
+   
+    if(!"img_y_format" %in% names(opts))
+    {
+        opts$img_y_format = "%.2f"  
+    }
+  
+    if(!"colorbar_format" %in% names(opts))
+    {
+         opts$colorbar_format = "%.1e"
+    }
+ 
+    if(!"cex.main" %in% names(opts))
+    {
+        opts$cex.main = 1
+    }
+    
+    if(!"cex.trace" %in% names(opts))
+    {
+        opts$cex.trace = opts$cex.main * 0.75
+    }
+
+    if(!"cex.colorbar" %in% names(opts))
+    {
+        opts$cex.colorbar = opts$cex.main * 0.75
+    }
+
+    if(!"cex.lab" %in% names(opts))
+    {
+        opts$cex.lab = opts$cex.main
+    }
+
+    if(pretty)
+    {    
+        img_x_labels=sprintf(opts$img_x_format, pretty(img$x, n=10))
+        img_y_labels=sprintf(opts$img_y_format, pretty(img$y, n=5))
+    }    
+    else 
+    {    
+       img_x_labels=sprintf(opts$img_x_format, seq(min(img$x), max(img$x), length.out = 10))
+       img_y_labels=sprintf(opts$img_y_format, seq(min(img$y), max(img$y), length.out=5))
+    }    
+
+    if(is.null(colormap))
+    {
+        colormap=rainbow(500,start=0,end=5/6)
+    }
+
+    colorbins = length(colormap)
+    
+    plot(c(-0.15,1),c(-0.15,1),type="n",axes=FALSE,xlab="", ylab="") # Set up main plot window
+ 
+    #Plot TRACE
+
+    trace_y=0.75
+    trace_x=0
+    trace_yspan=0.10
+    trace_xspan=0.9
+    trace_at=seq(trace_y,trace_y+trace_yspan,length.out=2)
+    trace_labels=c(min(trace$sig), max(trace$sig))
+    trace_scale=trace_yspan/(max(trace$sig)-min(trace$sig))
+    tt_scale=trace_xspan/max(trace$tt)
+    axis(4,pos=trace_x+trace_xspan,at=trace_at, labels=c("",""), cex.axis=opts$cex.trace)
+    lines((trace$tt*tt_scale+trace_x), (trace_y+(trace$sig-min(trace$sig))*trace_scale))
+    rect(trace_x, trace_y, trace_x+trace_xspan, trace_y+trace_yspan)
+
+    #Plot IMAGE
+    
+    image_y=0
+    image_x=0
+    image_yspan=0.75
+    image_xspan=0.9
+    image_xvec=seq(image_x, image_x+image_xspan, length.out=length(img$x))
+    image_yvec=seq(image_y, image_y+image_yspan, length.out=length(img$y))
+    img_x_at=seq(image_x,image_x+image_xspan,length.out=length(img_x_labels))
+    img_y_at=seq(image_y,image_y+image_yspan, length.out=length(img_y_labels))
+    rect(image_x,image_y,image_x+image_xspan,image_y+image_yspan,col=rgb(red=backcol[1], green=backcol[2], blue=backcol[3], maxColorValue=255))
+    image(image_xvec,image_yvec, img$z, col=colormap,add=TRUE)
+    axis(2, pos=image_x, at=img_y_at,labels=img_y_labels, cex.axis=opts$cex.lab)
+    axis(1,pos=image_y, at=img_x_at,labels=img_x_labels, cex.axis=opts$cex.lab)
+
+    #Plot GRID
+    if(grid)
+    {
+        line_color=rgb(red=100, green=100, blue=100, maxColorValue=255)
+        line_type=3
+        for(k in 2:(length(img_x_at)-1))
+        {
+            lines(c(img_x_at[k], img_x_at[k]), c(image_y, trace_y+trace_yspan), col=line_color, lty=line_type)
+        }
+
+        for(k in 2:(length(img_y_at)-1))
+        {
+            lines(c(image_x, image_x+image_xspan), c(img_y_at[k], img_y_at[k]), col=line_color, lty=line_type)
+        }
+    }
+
+    #Plot COLORBAR
+
+    if(colorbar)
+    {
+        color_x=image_x+image_xspan+0.015
+        color_xspan=0.025
+        color_y=image_y+image_yspan-0.20
+        color_yspan=0.10
+        color_xvec=c(color_x,color_x+color_xspan)
+        color_yvec=seq(color_y, color_y+color_yspan, length.out=colorbins)
+        color_at=seq(color_y,color_y+color_yspan,length.out=2)
+        colorbar_matrix=array(seq_len(colorbins),dim=c(1, colorbins))
+        image(color_xvec, color_yvec, colorbar_matrix, col=colormap, axes=FALSE, add=TRUE)
+    }
+
+
+    #Plot TEXT
+
+
+    text(trace_x + trace_xspan + 0.03, trace_y, srt=90, sprintf(opts$trace_format,trace_labels[1]), cex=opts$cex.trace)
+    text(trace_x + trace_xspan + 0.03, trace_y+trace_yspan, srt=90, sprintf(opts$trace_format, trace_labels[2]), cex=opts$cex.trace)
+    text(image_x-0.095, image_y+image_yspan/2, srt=90, img_x_lab, cex=opts$cex.lab)
+    text(image_x+image_xspan/2, image_y-0.1, img_y_lab, cex=opts$cex.lab)
+    if("main" %in% names(opts))
+    {
+        text(trace_x+trace_xspan/2, trace_y+trace_yspan+0.05,opts$main, cex=opts$cex.main)
+    }
+    if(colorbar)
+    {
+        text(color_x+0.015, color_y-0.0125, sprintf(opts$colorbar_format, min(img$z[!is.na(img$z)])), cex=opts$cex.colorbar)
+        text(color_x+0.015, color_y+color_yspan+0.0125, sprintf(opts$colorbar_format, max(img$z[!is.na(img$z)])), cex=opts$cex.colorbar)
+    }
+ 
+}
+
+
 hhtransform <- function(imf_set)
 
 {
     #Transform IMFs into instantaneous frequency and amplitude using the Hilbert transform
     #INPUTS
-    #EMD_RESULT is the EMD decomposition of a signal invisibleed by sig2imf.R
+    #EMD_RESULT is the EMD decomposition of a signal returned by sig2imf.R
     #Danny Bowman
     #OUTPUTS
     #  HHT is the Hilbert Transform of EMD_RESULT

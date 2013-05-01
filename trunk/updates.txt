@@ -1,6 +1,6 @@
 Things to change in next version
 1.  Be able to change plotting parameters (text size, etc) in plotting functions
-2.  User defined color maps for plotting functions
+2.  User defined color maps for plotting functions 
 3.  Maybe a 3d plotting function?
 4.  Maybe a contour plotting function?
 5.  Get Jonathan to change evolfft so that you can make it not adjust.
