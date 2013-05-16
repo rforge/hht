@@ -16,6 +16,8 @@ an end time of 26, which causes big problems later
 11.  Make sure 'par' is returned in image renderers where it is changed
 12.  Make axes editable
 13.  Check out as.image() in the fields package
-	14.  Make spectrogram able to discretize time.
+14.  Make spectrogram able to discretize time.
+15.  Check out new stop rule mentioned on page 3 of Huang et al 2013
+16.  Add log frequency option.
 Things that were changed
 -updated hhspec_image to return image on request
