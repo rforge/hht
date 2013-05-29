@@ -19,5 +19,22 @@ an end time of 26, which causes big problems later
 14.  Make spectrogram able to discretize time.
 15.  Check out new stop rule mentioned on page 3 of Huang et al 2013
 16.  Add log frequency option.
+17.  Make our own instantaneous frequency calculator that uses the central
+difference method without having to unravel stuff.
 Things that were changed
 -updated hhspec_image to return image on request
+Items that have been addressed
+#1 - can pass a lot of optional parameters
+#2 - done
+#3 - not really necessary
+#4 - not really necessary
+#5 - Made my own evolfft
+#7 - Improved hh_render, I think it is slightly faster (possibly at the
+expense of hhspec_image)
+#9 Done
+#10 - Probably needs more testing
+#11 - Par has been removed completely
+#12 - More or less
+#13 - incorporated into hh_render
+#14 - Done
+#16 - Done

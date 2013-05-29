@@ -213,10 +213,10 @@ eemd_compile<-function(trials_dir, trials, nimf)
                 }
         }
 	counter=counter-1
-        real_imfs = which(colSums(hspec$averaged_imfs) != 0) #Find out which IMFs have data in them
+        real_imfs = which(apply(array(as.logical(averaged_imfs), dim = dim(averaged_imfs)), 2, any) == TRUE) #Find out which IMFs have data in them
         if(length(real_imfs < nimf))
         {
-            warning("The number of requested IMFs is greater than the maximum number of IMFs produced during EEMD trials.  Only IMFs with data will be recorded.")
+            warning("The number of requested IMFs is greater than the maximum number of IMFs produced during individual EEMD trials.  Only IMFs with data will be recorded.")
         }
 
 	averaged_imfs=averaged_imfs[, real_imfs] / counter
@@ -338,6 +338,8 @@ evolutive_fft <- function(sig, dt, ft, freq_span, taper = 0.05)
     #       FT$NOV is the number of samples to overlap
     #    FREQ_SPAN is the frequency range to return
     #    TAPER is the percent taper applied to each window
+    #OUTPUTS
+    #    RET is the spectrogram image
 
     NT = length(sig);
     Nfft=ft$nfft
@@ -370,7 +372,7 @@ evolutive_fft <- function(sig, dt, ft, freq_span, taper = 0.05)
         krow = (Nfft+1)/2;
       }
 
-    if(krow - Ns < 0) #I was having problems with this earlier.  The number of rows became a negative number.  Not sure how you want to handle this.
+    if(krow - Ns < 0) 
     {
         print("Error in evolfft: The number of rows in the spectrogram matrix is less than the number of samples in the window.  Increase Nfft and try again.")
         return(NULL)
@@ -417,196 +419,121 @@ evolutive_fft <- function(sig, dt, ft, freq_span, taper = 0.05)
 
     y = (1:(numfreqs/2))*2*df
 
-    RET = list(sig=sig, dt=dt, numfreqs=numfreqs, wpars=list(Nfft= Nfft,  Ns=Ns, Nov=Nov, fl=freq_span[1], fh=freq_span[2]), DSPEC=DSPEC, freqs=y, tims=x)
+    RET = list(z=t(DSPEC[1:(numfreqs/2), ]), y=y, x=x, original_signal = sig, tt = seq(length(sig)) * dt)
 
 
     invisible(RET)
 }
  
 
-ftspec_image <- function(sig, dt, ft, time_span, freq_span, amp_span, amp_units=NULL, amp_unit_conversion=NULL, taper = 0.05, grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=TRUE, cex=1, trace_format = "%1.1e", main="")
+ftspec_image <- function(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_span = NULL, taper = 0.05, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=TRUE, ...)
 {
 	#Plots a Fourier spectrogram
 	#INPUTS
-        #SIG is the signal to analyze
-        #DT is the sample rate
-	#FT is the Fourier transform input parameters, adopted from Jonathan Lees' code in RSEIS
-	#	FT$NFFT is the fft length
-	#	FT$NS is the number of samples in a window
-	#	FT$NOV is the number of samples to overlap
-        #TIME_SPAN is the time span to plot, [0,-1] plots everything
-        #FREQ_SPAN is the frequency span to plot (<=max frequency in spectrogram), [0,-1] plots everything up to the Nyquist frequency
-	#AMP_SPAN is the amplitude range to plot.  [0, -1] plots everything.
-        #AMP_UNITS is the units of amplitude, used for axes labels
-        #AMP_UNIT_CONVERSION tells how to convert units in input data to units to display
-        #GRID is a boolean asking whether to display grid lines
-        #COLORBAR is a boolean asking whether to plot an amplitude colorbar
-        #BACKCOL is a 3 element vector of RGB values for the background of the spectrogram, based on a 0 to 255 scale: [red, green, blue]
-        #COLORMAP is an R palette object determining how the spectrogram colors should look
-        #PRETTY is a boolean asking whether to adjust axis labels so that they're pretty (TRUE) or give the exactly specified time and frequency intervals (FALSE)
-        #CEX is the size of the text on the figure
-        #TRACE_FORMAT is the number format of the trace labels
-        #MAIN is the title of the plot.
-	
-	
-	options(digits.secs=3)
+        #    SIG is the signal to analyze
+        #    DT is the sample rate (must be constant)
+	#    FT is the Fourier transform input parameters, adopted from Jonathan Lees' code in RSEIS
+	#        FT$NFFT is the fft length
+	#        FT$NS is the number of samples in a window
+        #        FT$NOV is the number of samples to overlap
+        #    TIME_SPAN is the time span to plot, NULL plots everything
+        #    FREQ_SPAN is the frequency span to plot (<=max frequency in spectrogram), NULL plots everything up to the Nyquist frequency
+	#    AMP_SPAN is the amplitude range to plot.  NULL plots everything.
+        #    TAPER is the cosine taper factor (amount of the signal to apply the taper to, must be < 0.5)
+        #    SCALING determines whether to apply a natural log (ln), logarithmic (log), or square root (sqrt) scaling to the amplitude data
+        #    GRID is a boolean asking whether to display grid lines
+        #    COLORBAR is a boolean asking whether to plot an amplitude colorbar
+        #    BACKCOL is a 3 element vector of RGB values for the background of the spectrogram, based on a 0 to 255 scale: [red, green, blue]
+        #    COLORMAP is an R palette object determining how the spectrogram colors should look
+        #    PRETTY is a boolean asking whether to adjust axis labels so that they're pretty (TRUE) or give the exactly specified time and frequency intervals (FALSE)
+        #    OPTIONAL PARAMETERS
+        #       TRACE_FORMAT is the format of the trace minima and maxima in sprintf format
+        #       IMG_X_FORMAT is the format of the X axis labels of the image in sprintf format
+        #       IMG_Y_FORMAT is the format of the Y axis labels of the image in sprintf format
+        #       COLORBAR_FORMAT is the format of the colorbar labels in sprintf format   
+        #       CEX.LAB is the font size of the image axis labels
+        #       CEX.COLORBAR is the font size of the colorbar
+        #       CEX.TRACE is the font size of the trace axis labels
+        #       IMG_X_LAB is the X - axis label of the image, it defaults to "time"
+        #       IMG_Y_LAB is the Y - axis label of the image, it defaults to "frequency" 
+        #OUTPUTS
+        #    IMG is the spectrogram	
+	opts = list(...)
 
-        if(time_span[2]<0)
+        if(!"img_x_lab" %in% names(opts))
         {
-                time_span[2]=length(sig)*dt
+            opts$img_x_lab = "time"
         }
 
-        if(time_span[2]>length(sig)*dt)
+        if(!"img_y_lab" %in% names(opts))
         {
-                time_span[2]=length(sig)*dt
-                warning("Requested time window is longer than the actual signal.")
+            opts$img_y_lab = "frequency"
         }
 
-        if(freq_span[2]<0)
+        if(is.null(time_span))
         {
-                freq_span[2]=(1/dt)/2
-        }
-        if(freq_span[2]>(1/dt)/2)
-        {
-                freq_span[2]=(1/dt)/2
-                warning("Requested frequency window is higher than the Nyquist frequency.")
+                time_span=c(dt, length(sig) * dt)
         }
 
-        if(is.null(amp_unit_conversion))
+        if(time_span[2] > length(sig) * dt)
         {
-                amp_unit_conversion=1
-        }
-        
-        if(is.null(colormap))
-        {
-            colormap=rainbow(500,start=0,end=5/6)
+                time_span[2]= length(sig) * dt
+                warning("The requested spectrogram is longer than the actual signal.")
         }
 
-        colorbins=length(colormap)
-
-        if(pretty)
+        if(is.null(freq_span))
         {
-            time_labels=pretty(seq(0,time_span[2]-time_span[1],length.out=10)+time_span[1], n=10)
-            freq_labels=pretty(seq(freq_span[1],freq_span[2],length.out=5), n=5)
-            time_span=c(min(time_labels), max(time_labels))
-            freq_span=c(min(freq_labels), max(freq_labels))
+                freq_span=c(0, 1/(dt * 2))
         }
-        else
+        if(freq_span[2] > 1 / (dt * 2))
         {
-           time_labels=format(seq(0,time_span[2]-time_span[1],length.out=10)+time_span[1],digits=2)
-           freq_labels=format(seq(freq_span[1],freq_span[2],length.out=5), digits=2)
+                freq_span[2] = 1 / (dt * 2)
+                warning("Requested maximum frequency is higher than the Nyquist frequency.")
         }
 
-        tind=seq_len((time_span[2]-time_span[1])/dt)+(time_span[1])/dt
+	ev=evolutive_fft(sig, dt, ft, freq_span, taper) #Calculate the Fourier spectrogram
+        ev$tt = seq(length(sig)) * dt
 
-        par(mai=c(0.1, 0.1, 0.1, 0.1))
-        plot(c(-0.15,1),c(-0.15,1),type="n",axes=FALSE,xlab="", ylab="") # Set up opts$main plot window
-        par(mai=c(0.1, 0.1, 0.1, 0.1))
-
-        sig=sig[tind]*amp_unit_conversion
-
-
-	ev=evolutive_fft(sig, dt, ft, freq_span)
-
-        ampcex=0.5*cex
-
-        #Plot TRACE
-
-        tt=tind*dt-time_span[1]
-        trace_y=0.75
-        trace_x=0
-        trace_yspan=0.10
-        trace_xspan=0.9
-        trace_at=seq(trace_y,trace_y+trace_yspan,length.out=2)
-        trace_labels=c(min(sig), max(sig))
-        trace_scale=trace_yspan/(max(sig)-min(sig))
-        tt_scale=trace_xspan/max(tt)
-        axis(4,pos=trace_x+trace_xspan,at=trace_at, labels=c("",""), cex.axis=ampcex)
-        lines((tt*tt_scale+trace_x), (trace_y+(sig-min(sig))*trace_scale))
-        rect(trace_x, trace_y, trace_x+trace_xspan, trace_y+trace_yspan)
-
-        #Plot IMAGE
-	
-        f_ind=(ev$freqs>=freq_span[1] & ev$freqs <= freq_span[2])
-        freqs=ev$freqs[f_ind]
-        image_z=t(ev$DSPEC[1:(ev$numfreqs/2),])
-        image_z=image_z[,f_ind]
-        if(amp_span[2]<0)
-        {
-
-             amp_span[1]=min(image_z)
-             amp_span[2]=max(image_z)
-        }
-        image_z[image_z<amp_span[1]]=NA
-        image_z[image_z>amp_span[2]]=amp_span[2]
-        image_y=0
-        image_x=0
-        image_yspan=0.75
-        image_xspan=0.9
-        image_xvec=seq(image_x, image_x+image_xspan, length.out=length(ev$tims))
-        image_yvec=seq(image_y, image_y+image_yspan, length.out=length(freqs))
-        time_at=seq(image_x,image_x+image_xspan,length.out=length(time_labels))
-        freq_at=seq(image_y,image_y+image_yspan, length.out=length(freq_labels))
-        rect(image_x,image_y,image_x+image_xspan,image_y+image_yspan,col=rgb(red=backcol[1], green=backcol[2], blue=backcol[3], maxColorValue=255))
-        image(image_xvec,image_yvec, image_z, col=colormap,add=TRUE)
-        axis(2, pos=image_x, at=freq_at,labels=freq_labels, cex.axis=cex)
-        axis(1, pos=image_y, at=time_at,labels=time_labels, cex.axis=cex)
-        
-        #Plot GRID
-        
-        if(grid)
-        {
-                line_color=rgb(red=100, green=100, blue=100, maxColorValue=255)
-                line_type=3
-                for(k in 2:(length(time_at)-1))
-                {
-                        lines(c(time_at[k], time_at[k]), c(image_y, trace_y+trace_yspan), col=line_color, lty=line_type)
-                }
-
-                for(k in 2:(length(freq_at)-1))
-                {
-                        lines(c(image_x, image_x+image_xspan), c(freq_at[k], freq_at[k]), col=line_color, lty=line_type)
-                }
+        if(is.null(amp_span))
+        {    
+             amp_span = c(min(ev$z), max(ev$z))
         }
 
-        #Plot COLORBAR
+        img = list()
+        img$z = ev$z[ev$x >= time_span[1] & ev$x <= time_span[2], ev$y >= freq_span[1] & ev$y <= freq_span[2]]
+        img$x = ev$x[ev$x >= time_span[1] & ev$x <= time_span[2]]
+        img$y = ev$y[ev$y >= freq_span[1] & ev$y <= freq_span[2]]
 
-        if(colorbar)
+        img$z[img$z<amp_span[1]] = NA
+        img$z[img$z>amp_span[2]] = amp_span[2]
+        img$z[img$z == 0] = NA
+
+        if(scaling == "ln") #Scale by natural log
         {
-                color_x=image_x+image_xspan+0.015
-                color_xspan=0.025
-                color_y=image_y+image_yspan-0.20
-                color_yspan=0.10
-                color_xvec=c(color_x,color_x+color_xspan)
-                color_yvec=seq(color_y, color_y+color_yspan, length.out=colorbins)
-                color_at=seq(color_y,color_y+color_yspan,length.out=2)
-                color_labels=format(seq(amp_span[1],amp_span[2],length.out=2),digits=2)
-                colorbar=array(seq_len(colorbins),dim=c(1, colorbins))
-                image(color_xvec, color_yvec, colorbar, col=colormap, axes=FALSE, add=TRUE)
-                text(color_x+0.015, color_y-0.0125, format(amp_span[1], digits=2), cex=ampcex)
-                text(color_x+0.015, color_y+color_yspan+0.0125, format(amp_span[2], digits=2), cex=ampcex)        
+            img$z = log(img$z)
         }
 
-        #Plot TEXT
-        text(trace_x + trace_xspan + 0.03, trace_y, srt=90, sprintf(opts$trace_format,trace_labels[1]), cex=ampcex)
-        text(trace_x + trace_xspan + 0.03, trace_y+trace_yspan, srt=90, sprintf(opts$trace_format, trace_labels[2]), cex=ampcex)
-	text(image_x-0.095, image_y+image_yspan/2, srt=90, "Frequency", cex=cex)
-        text(image_x+image_xspan/2, image_y-0.1, "Time (s)", cex=cex)
-        text(trace_x+trace_xspan/2, trace_y+trace_yspan+0.05,opts$main, cex=cex)
-        
-        if(!is.null(amp_units))
+        if(scaling == "log") #Log 10 scale
         {
-                text(trace_x+trace_xspan/2, trace_y+trace_yspan+0.025,paste("Trace and Spectrogram Amplitudes in",amp_units), cex=ampcex)
+            img$z = log10(img$z)
         }
+
+        if(scaling == "sqrt") #Take the square root
+        {
+            img$z = sqrt(img$z)
+        }
+
+        trace = list()
+        trace$sig = ev$original_signal[ev$tt >= time_span[1] & ev$tt <= time_span[2]]
+        trace$tt = ev$tt[ev$tt >= time_span[1] & ev$tt <= time_span[2]]
+
+        hht_package_plotter(img, trace, opts$img_x_lab, opts$img_y_lab, window = ft$ns / length(sig), colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
  
-       #Plot WINDOW
-       
-       rwidth=trace_xspan*(ev$wpars$Ns/length(sig))		
-       rect(trace_x+trace_xspan-rwidth, trace_y+trace_yspan, trace_x+trace_xspan, trace_y+trace_yspan+0.01, col="black")
+        invisible(img)
 
 }		
 
-hh_render <- function(hres, dt, dfreq, freq_span = NULL, scaling = "none", verbose = TRUE)
+hh_render <- function(hres, dt, dfreq, freq_span = NULL, time_span = NULL, scaling = "none", verbose = TRUE)
 {
 	#Renders a spectrogram of EMD or Ensemble EMD (EEMD) results.
 	#INPUTS
@@ -616,23 +543,20 @@ hh_render <- function(hres, dt, dfreq, freq_span = NULL, scaling = "none", verbo
         #       this prevents subsample resolution.
         #       DFREQ is the frequency resolution of the spectrogram
         #       FREQ_SPAN is the frequency range to calculate the spectrum over c(MIN, MAX).  NULL means capture the full frequency spectrum of the signal.
-        #       SCALING determines whether to plot frequency as log 10 ("log"), natural log ("ln"), or linear ("none")
+        #       TIME_SPAN is the portion of the signal to include.  NULL means the whole signal.
+        #       SCALING determines whether to plot frequency as log 10 ("log") or linear ("none")
         #       VERBOSE prints out status messages (i.e. IMF 1 COMPLETE!)
 	#OUTPUTS
-	#	HSPEC is a spectrogram matrix ready to be plotted by HHSPEC_IMAGE
+	#	HGRAM is a spectrogram matrix ready to be plotted by HHGRAM_IMAGE
 	#Danny Bowman
 	#UNC Chapel Hill
 	#August 2012
         
-        hspec = hres
+        hgram = hres
 
         if(scaling == "log")
         {
             hres$hinstfreq = log10(hres$hinstfreq)
-        }
-        else if (scaling == "ln")
-        {
-            hres$hinstfreq = log(hres$hinstfreq)
         }
         else if (scaling != "none")
         {
@@ -662,14 +586,19 @@ hh_render <- function(hres, dt, dfreq, freq_span = NULL, scaling = "none", verbo
              if("tt" %in% names(hres))
              {
                  warning("Input data has both DT (sample rate) and TT (sample times) components.  Component TT will be used to calculate the spectrogram")
-                 hspec$tt = hres$tt
+                 hgram$tt = hres$tt
              }
              else
              {
-                 hspec$tt = seq(length(hres$original_signal)) * hres$dt
+                 hgram$tt = seq(length(hres$original_signal)) * hres$dt
              }
         }
 
+        if(is.null(time_span))
+        {
+           time_span = c(min(hgram$tt), max(hgram$tt))
+        }
+ 
 	#If the spectra is generated from EMD instead of EEMD, make it resemble EEMD but with only 1 trial.
 	if(length(dim(hres$hamp))==2)
 	{
@@ -680,56 +609,68 @@ hh_render <- function(hres, dt, dfreq, freq_span = NULL, scaling = "none", verbo
         if(!(("tt" %in% names(hres)) | ("dt" %in% names(hres))))
         {
             warning("Neither DT (sample rate) nor TT (sample times) were specified in the input data.  Assuming DT is 1...")
-            hspec$tt = seq(length(hres$original_signal))
+            hgram$tt = seq(length(hres$original_signal))
         } 
 
+        if(time_span[2]>max(hgram$tt))
+        {
+                time_span[2]=max(hgram$tt)
+                warning("Requested time window is longer than the actual signal.")
+        }
+
+        hres$hinstfreq = hres$hinstfreq[hgram$tt >= time_span[1] & hgram$tt <= time_span[2],,]
+        hres$hamp = hres$hamp[hgram$tt >= time_span[1] & hgram$tt <= time_span[2],,]
+        hgram$original_signal = hres$original_signal[hgram$tt >= time_span[1] & hgram$tt <= time_span[2]]
+        hgram$tt = hgram$tt[hgram$tt >= time_span[1] & hgram$tt <= time_span[2]]
+       
         grid = list()
-        grid$x = hspec$tt
+        grid$x = hgram$tt
         grid$y = seq(from = freq_span[1], to = freq_span[2] + dfreq, by = dfreq)
-        hspec$z=array(rep(0,(length(grid$x) * length(grid$y) * hres$nimf)),dim=c(length(grid$x),length(grid$y), hres$nimf))
-        hspec$cluster=hspec$z #Shows how many times a given grid node has data.
+        hgram$z=array(rep(0,(length(grid$x) * length(grid$y) * hres$nimf)),dim=c(length(grid$x),length(grid$y), hres$nimf))
+        hgram$cluster=hgram$z #Shows how many times a given grid node has data.
         for(i in seq(hres$nimf))
         {
-            x = array(c(rep(hspec$tt,hres$trials), hres$hinstfreq[,i,]), dim = c(length(hspec$tt)*hres$trials, 2))
+            x = array(c(rep(hgram$tt,hres$trials), hres$hinstfreq[,i,]), dim = c(length(hgram$tt)*hres$trials, 2))
             imf_img = as.image(hres$hamp[,i,], grid = grid, x = x)
-            hspec$z[,,i] = imf_img$z
-            hspec$cluster[,,i] = imf_img$weights
+            hgram$z[,,i] = imf_img$z
+            hgram$cluster[,,i] = imf_img$weights
             if(verbose)
             {
                 print(paste("IMF", i, "COMPLETE!"))
             }
         }
         
-        hspec$z[is.na(hspec$z)] = 0
-        hspec$cluster[is.na(hspec$cluster)] = 0
-        hspec$x = imf_img$x 
-        hspec$y = imf_img$y
-	hspec$original_signal=hres$original_signal
-	hspec$dfreq=dfreq
-	hspec$dt=hres$dt
-	invisible(hspec) #Return the spectrogram structure.
+        hgram$z[is.na(hgram$z)] = 0
+        hgram$cluster[is.na(hgram$cluster)] = 0
+        hgram$x = imf_img$x 
+        hgram$y = imf_img$y
+	hgram$dfreq=dfreq
+	hgram$dt=hres$dt
+        hgram$scaling = scaling
+	invisible(hgram) #Return the spectrogram structure.
 }
 
-hhspec_image <- function(hspec,time_span = NULL,freq_span = NULL, amp_span = NULL, cluster_span=NULL, imf_list = NULL, imf_sum = FALSE, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=FALSE, ...)
+hhgram_image <- function(hgram,time_span = NULL,freq_span = NULL, amp_span = NULL, clusterspec = FALSE, cluster_span=NULL, imf_list = NULL, imf_sum = FALSE, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=FALSE, ...)
 {
 	#Plots a spectrogram of the EEMD processed signal as an image.	
 	#INPUTS
-	#	HSPEC is the subsetted spectrogram  from HH_RENDER.
-	#		HSPEC$X is time
-	#		HSPEC$Y is frequency
-	#		HSPEC$Z is amplitude normalized to trials
-	#		HSPEC$CLUSTER is a matrix containing integer values corresponding to the number of times a signal was recorded in a given spectrogram cell during EEMD
+	#	HGRAM is the subsetted spectrogram  from HH_RENDER.
+	#		HGRAM$X is time
+	#		HGRAM$Y is frequency
+	#		HGRAM$Z is amplitude normalized to trials
+	#		HGRAM$CLUSTER is a matrix containing integer values corresponding to the number of times a signal was recorded in a given spectrogram cell during EEMD
 	#		The more often the signal is recorded, the more likely it is that the signal is real and not noise
-	#		HSPEC$TRIALS is the number of times EEMD was run to generate signal
-	#		HSPEC$ORIGINAL_SIGNAL is the original seismogram (without added noise)
-        #               HSPEC$TT is the sample times
+	#		HGRAM$TRIALS is the number of times EEMD was run to generate signal
+	#		HGRAM$ORIGINAL_SIGNAL is the original seismogram (without added noise)
+        #               HGRAM$TT is the sample times
 	#	TIME_SPAN is the time span to plot, [0,-1] plots everything
 	#	FREQ_SPAN is the frequency span to plot (<=max frequency in spectrogram), [0,-1] plots everything
 	#	AMP_SPAN is the amplitude span to plot, everything below is set to black, everything above is set to max color, [0, -1] scales to range in signal
+        #	CLUSTERSPEC tells the code to plot the signal amplitude (FALSE) or the number of times data occupies a given pixel (TRUE).
 	#	CLUSTER_SPAN plots only the parts of the signal that have a certain number of data points per pixel [AT LEAST, AT MOST] this only applies to EEMD with multiple trials.
         #       IMF_LIST is a list of IMFs to plot on the spectrogram.  If NULL, plot all IMFs.
         #       IMF_SUM can be set to show the sum of IMFs shown in the spectrogram plotted as a red line against the original trace
-        #       SCALING determines whether to apply a natural log (ln), logarithmic (log), or square root (sqrt) scaling to the amplitude data
+        #       SCALING determines whether to apply a logarithmic (log), or square root (sqrt) scaling to the amplitude data, default is "none"
 	#	GRID is a boolean asking whether to display grid lines
 	#	COLORBAR is a boolean asking whether to plot an amplitude colorbar
         #       BACKCOL is a 3 element vector of RGB values for the background of the spectrogram, based on a 0 to 255 scale: [red, green, blue]
@@ -745,6 +686,8 @@ hhspec_image <- function(hspec,time_span = NULL,freq_span = NULL, amp_span = NUL
         #       CEX.TRACE is the font size of the trace axis labels
         #       IMG_X_LAB is the X - axis label of the image, it defaults to "time"
         #       IMG_Y_LAB is the Y - axis label of the image, it defaults to "frequency"
+        #OUTPUTS
+        #     IMG is the spectrogram returned as an image
 
         opts = list(...)
  
@@ -761,23 +704,17 @@ hhspec_image <- function(hspec,time_span = NULL,freq_span = NULL, amp_span = NUL
         #Subset by IMFs
         if(is.null(imf_list))
         {
-            imf_list = seq(hspec$nimf)
+            imf_list = seq(hgram$nimf)
         }
         else
         {
-            if(max(imf_list) > hspec$nimf)
+            if(max(imf_list) > hgram$nimf)
             {
                 warning("Requested more IMFs than are present in the actual EMD results!")
-                imf_list = imf_list[imf_list < hspec$nimf]
+                imf_list = imf_list[imf_list < hgram$nimf]
             }
         }   
    
-        img = list()
-        img$z = apply(hspec$z[,,imf_list], c(1, 2), sum)
-        img$x = hspec$x
-        img$y = hspec$y
-        cluster = apply(hspec$cluster[,,imf_list], c(1, 2), sum)
-        
         if(!is.null(cluster_span))
         {
             img$z[cluster >= cluster_span[1] & cluster <= cluster_span[2]] = NA
@@ -785,33 +722,28 @@ hhspec_image <- function(hspec,time_span = NULL,freq_span = NULL, amp_span = NUL
  
 	if(is.null(time_span))
 	{
-		time_span=c(min(hspec$tt), max(hspec$tt))
+		time_span=c(min(hgram$tt), max(hgram$tt))
 	}
 	
-	if(time_span[2]>max(hspec$tt))
+	if(time_span[2]>max(hgram$tt))
 	{
-		time_span[2]=max(hspec$tt)
+		time_span[2]=max(hgram$tt)
 		warning("Requested time window is longer than the actual signal.")
 	}
 	
 	if(is.null(freq_span))
 	{
-		freq_span=c(min(hspec$y), max(hspec$y))
+		freq_span=c(min(hgram$y), max(hgram$y))
 	}
-	if(freq_span[2]>max(hspec$hinstfreq))
+	if(freq_span[2]>max(hgram$hinstfreq))
 	{
-		freq_span[2]=hspec$max_freq
+		freq_span[2]=max(hgram$y)
 		warning("Requested frequency window is higher than maximum frequency in the spectrogram.")
 	}
 
-        if(is.null(amp_span))
-        {
-             amp_span = c(min(hspec$hamp), max(hspec$hamp))
-        }
-
         if(imf_sum)
         {
-             imf_sum = rowSums(hspec$averaged_imfs[hspec$x >= time_span[1] & hspec$x <= time_span[2], imf_list])
+             imf_sum = rowSums(hgram$averaged_imfs[hgram$x >= time_span[1] & hgram$x <= time_span[2], imf_list])
         }
         else
         {
@@ -819,24 +751,35 @@ hhspec_image <- function(hspec,time_span = NULL,freq_span = NULL, amp_span = NUL
         }
 
         img = list()
-        img$z = apply(hspec$z[hspec$x >= time_span[1] & hspec$x <= time_span[2], hspec$y >= freq_span[1] & hspec$y <= freq_span[2],imf_list], c(1, 2), sum)
-        img$x = hspec$x[hspec$x >= time_span[1] & hspec$x <= time_span[2]]
-        img$y = hspec$y[hspec$y >= freq_span[1] & hspec$y <= freq_span[2]]
-        cluster = apply(hspec$cluster[hspec$x >= time_span[1] & hspec$x <= time_span[2], hspec$y >= freq_span[1] & hspec$y <= freq_span[2],imf_list], c(1, 2), sum)
+        img$x = hgram$x[hgram$x >= time_span[1] & hgram$x <= time_span[2]]
+        img$y = hgram$y[hgram$y >= freq_span[1] & hgram$y <= freq_span[2]]
+        cluster = apply(hgram$cluster[hgram$x >= time_span[1] & hgram$x <= time_span[2], hgram$y >= freq_span[1] & hgram$y <= freq_span[2],imf_list], c(1, 2), sum)
+
+        #Determine if we are plotting clustering or amplitudes
+
+        if(clusterspec)
+        {
+            img$z = cluster
+        }
+        else
+        {
+            img$z = apply(hgram$z[hgram$x >= time_span[1] & hgram$x <= time_span[2], hgram$y >= freq_span[1] & hgram$y <= freq_span[2],imf_list], c(1, 2), sum)
+        }
 
         if(!is.null(cluster_span))
         {
             img$z[cluster <= cluster_span[1] |  cluster >= cluster_span[2]] = NA
         }
-        
+       
+
+        if(is.null(amp_span))
+        {
+             amp_span = c(min(img$z), max(img$z))
+        }
+ 
         img$z[img$z<amp_span[1]] = NA
         img$z[img$z>amp_span[2]] = amp_span[2]
         img$z[img$z == 0] = NA
-
-        if(scaling == "ln") #Scale by natural log
-        {
-            img$z = log(img$z)
-        }
 
         if(scaling == "log") #Log 10 scale
         {
@@ -849,10 +792,12 @@ hhspec_image <- function(hspec,time_span = NULL,freq_span = NULL, amp_span = NUL
         }
        
         trace = list()
-        trace$sig = hspec$original_signal[hspec$tt >= time_span[1] & hspec$tt <= time_span[2]]
-        trace$tt = hspec$tt[hspec$tt >= time_span[1] & hspec$tt <= time_span[2]]
+        trace$sig = hgram$original_signal[hgram$tt >= time_span[1] & hgram$tt <= time_span[2]]
+        trace$tt = hgram$tt[hgram$tt >= time_span[1] & hgram$tt <= time_span[2]]
 
-        hht_package_plotter(img, trace, opts$img_x_lab, opts$img_y_lab, imf_sum, colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
+        hht_package_plotter(img, trace, opts$img_x_lab, opts$img_y_lab, imf_sum = imf_sum, colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
+    
+        invisible(img)
 }
 
 hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL, window = NULL, colormap = NULL, backcol = c(0, 0, 0), pretty = FALSE, grid = TRUE, colorbar = TRUE, opts = list())
@@ -997,6 +942,15 @@ hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL
     axis(2, pos=image_x, at=img_y_at,labels=img_y_labels, cex.axis=opts$cex.lab)
     axis(1,pos=image_y, at=img_x_at,labels=img_x_labels, cex.axis=opts$cex.lab)
 
+    #Plot Fourier window, if applicable
+    
+    if(!is.null(window))
+    {
+        rwidth = trace_xspan * window 
+        rect(trace_x + trace_xspan - rwidth, trace_y + trace_yspan, trace_x + trace_xspan, trace_y + trace_yspan + 0.01, col = "black")
+    }
+
+
     #Plot GRID
     if(grid)
     {
@@ -1048,9 +1002,90 @@ hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL
  
 }
 
+hhspectrum <- function(hres, dt, dfreq, freq_span = NULL, time_span = NULL, scaling = "none", verbose = TRUE)
+{
+    #Calculate the Hilbert spectrogram of a signal contained in HRES (returned by HHTRANSFORM or EEMD_COMPILE)
+    #INPUTS
+    #       HRES is a matrix of data generated by EEMD_COMPILE or the output of HHTRANSFORM
+    #       it represents a set on all time/frequency/amplitude points from the given EEMD run
+    #       DT is the time resolution of the spectrogram.  Currently, if there is a hres$dt field, DT must be greater than or equal to hres$dt.
+    #       this prevents subsample resolution.
+    #       DFREQ is the frequency resolution of the spectrogram
+    #       FREQ_SPAN is the frequency range to calculate the spectrum over c(MIN, MAX).  NULL means capture the full frequency spectrum of the signal.
+    #       TIME_SPAN is the time span to calculate the spectrum over c(MIN, MAX).  NULL means use the entire signal
+    #       SCALING determines whether to calculate frequency as log 10 ("log") or linear ("none")
+    #       VERBOSE prints out status messages (i.e. IMF 1 COMPLETE!)
+    #OUTPUTS
+    #    HSPEC is the Hilbert spectrum of the signal, separated by IMF.
 
+   hgram = hh_render(hres, dt, dfreq, freq_span = NULL, time_span = NULL, scaling = scaling, verbose = TRUE)
+
+   amps = array(rep(0, dim(hgram$z)[2] * dim(hgram$z)[3]), dim = dim(hgram$z)[2:3])
+
+   for(i in seq(hres$nimf))
+   {
+       amps[, i] = apply(hgram$z[, , i], 2, sum) 
+   }
+
+  invisible(list(amplitude = amps, frequency = hgram$y))
+} 
+
+hhspec_plot <- function(hspec, scaling = "none", imf_list = NULL, imf_sum = TRUE, imf_cols = NULL, legend = TRUE, fourier = FALSE, ...)
+{
+    #Plot the Hilbert spectrum, optionally as individual IMFs, optionally with the scaled Fourier spectrum for comparison
+    #INPUTS
+    #    HSPEC is the Hilbert spectrogram returned by HHSPECTRUM
+    #    SCALING whether to take the base 10 logarithm of amplitude ("log") or square root of amplitude ("sqrt") or do nothing ("none")
+    #    IMF_LIST means only include these IMFS, NULL includes all of them
+    #    IMF_SUM means add up the IMFs and plot the result (TRUE) or plot individual IMFs (FALSE)
+    #    IMF_COLS is a vector of length IMF_LIST with colors to plot the individual IMFs.  Defaults to a colormap
+    #    LEGEND asks whether to plot a legend.  Additional options will place the legend where you want it.
+    #    FOURIER determines whether you want a scaled Fourier spectrum for comparison (TRUE) or not (FALSE)
+    #ADDITIONAL OPTIONS
+    #    LEGEND_LOCATION determines where to put the legend.  
+    #    HILBERT_LWD is the line weight for the IMFs or the IMF sum
+    #    HILBERT_LTY is the line type for the IMFs or the IMF sum
+    opts = list(...)
+
+    if(!"xlab" %in% names(opts))
+    {
+        opts$xlab = "Frequency"
+    }
+
+    
+    if(is.null(imf_list))
+    {
+        imf_list = seq(dim(hspec$amplitude)[2])
+    }
+
+    if(is.null(imf_cols))
+    {
+        imf_cols = rainbow(length(imf_list), start = 0, end = 5/6)
+    }
+
+    if(!imf_sum)
+    {
+       pmax = max(hspec$amplitude)
+    }
+    else
+    {
+        pmax = max(apply(hspec$amplitude, 1, sum))
+    }
+
+    plot(c(min(hspec$frequency), max(hspec$frequency)), c(min(hspec$amplitude), pmax), type = "n", ...)
+    if(!imf_sum)
+    {
+       for(k in imf_list)
+       {
+           lines(hspec$frequency, hspec$amplitude[,k], col = imf_cols[k], lwd = opts$hilbert_lwd, lty = opts$hilbert_lty)
+       }
+    }
+    else
+    {
+        lines(hspec$frequency, apply(hspec$amplitude, 1, sum), ...)
+    }
+}
 hhtransform <- function(imf_set)
-
 {
     #Transform IMFs into instantaneous frequency and amplitude using the Hilbert transform
     #INPUTS
