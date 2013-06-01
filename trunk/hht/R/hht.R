@@ -134,9 +134,6 @@ eemd <-function(sig, dt, trials, nimf, noise_amp, emd_config, trials_dir=NULL)
 		tmpsig=sig+noise
                 tt=seq_len(length(sig))*dt
 		emd_result=sig2imf(tmpsig,dt, emd_config)
-		hht=hhtransform(emd_result)
-		emd_result$hinstfreq=hht$hinstfreq
-		emd_result$hamp=hht$hamp
 		emd_result$noise=noise
 		emd_result$original_signal=tmpsig-noise
 		save(emd_result, file=paste(trials_dir, "/", "TRIAL_",sprintf("%05i",j),".RData",sep=""))
@@ -550,8 +547,7 @@ hh_render <- function(hres, dt, dfreq, freq_span = NULL, time_span = NULL, scali
 	#	HGRAM is a spectrogram matrix ready to be plotted by HHGRAM_IMAGE
 	#Danny Bowman
 	#UNC Chapel Hill
-	#August 2012
-        
+
         hgram = hres
 
         if(scaling == "log")
@@ -598,14 +594,7 @@ hh_render <- function(hres, dt, dfreq, freq_span = NULL, time_span = NULL, scali
         {
            time_span = c(min(hgram$tt), max(hgram$tt))
         }
- 
-	#If the spectra is generated from EMD instead of EEMD, make it resemble EEMD but with only 1 trial.
-	if(length(dim(hres$hamp))==2)
-	{
-		hres$hamp=array(hres$hamp, dim=c(dim(hres$hamp)[1], dim(hres$hamp)[2], 1))
-		hres$hinstfreq=array(hres$hinstfreq, dim=c(dim(hres$hamp)[1], dim(hres$hamp)[2], 1))
-	}
-      
+
         if(!(("tt" %in% names(hres)) | ("dt" %in% names(hres))))
         {
             warning("Neither DT (sample rate) nor TT (sample times) were specified in the input data.  Assuming DT is 1...")
@@ -617,10 +606,10 @@ hh_render <- function(hres, dt, dfreq, freq_span = NULL, time_span = NULL, scali
                 time_span[2]=max(hgram$tt)
                 warning("Requested time window is longer than the actual signal.")
         }
-
-        hres$hinstfreq = hres$hinstfreq[hgram$tt >= time_span[1] & hgram$tt <= time_span[2],,]
-        hres$hamp = hres$hamp[hgram$tt >= time_span[1] & hgram$tt <= time_span[2],,]
-        hgram$original_signal = hres$original_signal[hgram$tt >= time_span[1] & hgram$tt <= time_span[2]]
+ 
+        hres$hinstfreq = array(hres$hinstfreq[which(hgram$tt >= time_span[1] & hgram$tt <= time_span[2]),], dim = c(length(hgram$tt), hres$nimf, hres$trials))
+        hres$hamp = array(hres$hamp[hgram$tt >= time_span[1] & hgram$tt <= time_span[2],], dim = c(length(hgram$tt), hres$nimf, hres$trials))
+        hres$original_signal = hres$original_signal[hgram$tt >= time_span[1] & hgram$tt <= time_span[2]]
         hgram$tt = hgram$tt[hgram$tt >= time_span[1] & hgram$tt <= time_span[2]]
        
         grid = list()
@@ -639,7 +628,9 @@ hh_render <- function(hres, dt, dfreq, freq_span = NULL, time_span = NULL, scali
                 print(paste("IMF", i, "COMPLETE!"))
             }
         }
-        
+       
+        hgram$hinstfreq = hres$hinstfreq
+        hgram$hamp = hres$hamp 
         hgram$z[is.na(hgram$z)] = 0
         hgram$cluster[is.na(hgram$cluster)] = 0
         hgram$x = imf_img$x 
@@ -889,9 +880,17 @@ hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL
     }
 
     if(pretty)
-    {    
-        img_x_labels=sprintf(opts$img_x_format, pretty(img$x, n=10))
-        img_y_labels=sprintf(opts$img_y_format, pretty(img$y, n=5))
+    {   #Get nice divisions
+        pretty_x = pretty(img$x, n=10)
+        pretty_y = pretty(img$y, n=5) 
+        pretty_x = pretty_x[pretty_x <= max(img$x) & pretty_x >= min(img$x)]
+        pretty_y = pretty_y[pretty_y <= max(img$y) & pretty_y >= min(img$y)]
+        img$z = img$z[img$x <= max(pretty_x) & img$x >= min(pretty_x), img$y <= max(pretty_y) & img$y >= min(pretty_y)]
+        img$x = img$x[img$x <= max(pretty_x) & img$x >= min(pretty_x)]
+        img$y = img$y[img$y <= max(pretty_y) & img$y >= min(pretty_y)]
+        img_x_labels=sprintf(opts$img_x_format, pretty_x)
+        img_y_labels=sprintf(opts$img_y_format, pretty_y)
+        cat("Adjusting Time and Frequency limits to nice looking numbers (the \"pretty\" option is currently set to TRUE)\n")
     }    
     else 
     {    
@@ -1002,7 +1001,7 @@ hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL
  
 }
 
-hhspectrum <- function(hres, dt, dfreq, freq_span = NULL, time_span = NULL, scaling = "none", verbose = TRUE)
+hh_spectrum <- function(hres, dt, dfreq, freq_span = NULL, time_span = NULL, scaling = "none", verbose = TRUE)
 {
     #Calculate the Hilbert spectrogram of a signal contained in HRES (returned by HHTRANSFORM or EEMD_COMPILE)
     #INPUTS
@@ -1027,88 +1026,373 @@ hhspectrum <- function(hres, dt, dfreq, freq_span = NULL, time_span = NULL, scal
        amps[, i] = apply(hgram$z[, , i], 2, sum) 
    }
 
-  invisible(list(amplitude = amps, frequency = hgram$y))
+  invisible(list(amplitude = amps, frequency = hgram$y, original_signal = hgram$original_signal, dt = hgram$dt))
 } 
 
-hhspec_plot <- function(hspec, scaling = "none", imf_list = NULL, imf_sum = TRUE, imf_cols = NULL, legend = TRUE, fourier = FALSE, ...)
+hhspec_plot <- function(hspec, freq_span = NULL, scaling = "none", imf_list = NULL, show_total = TRUE, show_fourier = FALSE, show_imfs = FALSE, legend = TRUE, ...)
 {
     #Plot the Hilbert spectrum, optionally as individual IMFs, optionally with the scaled Fourier spectrum for comparison
     #INPUTS
     #    HSPEC is the Hilbert spectrogram returned by HHSPECTRUM
-    #    SCALING whether to take the base 10 logarithm of amplitude ("log") or square root of amplitude ("sqrt") or do nothing ("none")
+    #    FREQ_SPAN is the frequencies to plot, NULL means plot everything
+    #    SCALING whether to take the base 10 logarithm of amplitude ("log") or square root of amplitude ("sqrt")  or do nothing ("none")
     #    IMF_LIST means only include these IMFS, NULL includes all of them
-    #    IMF_SUM means add up the IMFs and plot the result (TRUE) or plot individual IMFs (FALSE)
+    #    SHOW_TOTAL means show the sum of the IMF Hilbert spectra
+    #    SHOW_IMFS means plot individual IMFs
+    #    SHOW_FOURIER determines whether you want a Fourier spectrum for comparison (TRUE) or not (FALSE)
     #    IMF_COLS is a vector of length IMF_LIST with colors to plot the individual IMFs.  Defaults to a colormap
     #    LEGEND asks whether to plot a legend.  Additional options will place the legend where you want it.
-    #    FOURIER determines whether you want a scaled Fourier spectrum for comparison (TRUE) or not (FALSE)
     #ADDITIONAL OPTIONS
-    #    LEGEND_LOCATION determines where to put the legend.  
-    #    HILBERT_LWD is the line weight for the IMFs or the IMF sum
-    #    HILBERT_LTY is the line type for the IMFs or the IMF sum
+    #    XLAB is the X axis label
+    #    YLAB is the Y axis label
+    #    LEGEND_LOCATION determines where to put the legend.
+    #    TOTAL_COL is the color of the ensemble Hilbert spectrum
+    #    TOTAL_LWD is the line weight of the ensemble Hilbert spectrogram
+    #    LOTAL_LTY is the line type of the ensemble Hilbert spectrogram
+    #    IMF_COLS sets the color of each IMF - a vector with length IMF_LIST    
+    #    IMF_LWD is the line weight for the IMFs as a vector with length IMF_LIST
+    #    IMF_LTY is the line type for the IMFs as a vector with length IMF_LIST
+    #    FOURIER_COL is the color of the Fourier spectrum line
+    #    FOURIER_LTY is the line type of the Fourier spectrum line
+    #    FOURIER_LWD is the line weight of the Fourier spectrum line
+    #    SCALE_FOURIER scales the Fourier spectrum line to the Hilbert spectrum line if TRUE.  Defaults to FALSE.
+
+    if(!(show_total | show_imfs | show_fourier))
+    {
+        error("Nothing to plot!  Set at least one of SHOW_TOTAL, SHOW_IMFS, or SHOW_FOURIER to TRUE.")
+    }
+
     opts = list(...)
+
+    if(!(scaling == "log" | scaling == "sqrt" | scaling == "none"))
+    {
+        warning(paste("Did not recognize requested scaling: \"", scaling, "\".  Options are \"log\" (base 10 logarithm), \"sqrt\" (square root), or \"none\""))
+        scaling = "none"
+    }
+    
+    if(is.null(freq_span))
+    {
+        freq_span = c(0, max(hspec$frequency))
+    }
+   
+    hspec$amplitude = hspec$amplitude[hspec$frequency >= freq_span[1] & hspec$frequency<= freq_span[2],]
+    hspec$frequency = hspec$frequency[hspec$frequency >= freq_span[1] & hspec$frequency<= freq_span[2]]
+
+    if(!"legend_location" %in% names(opts) & legend)
+    {
+        opts$legend_location = "topright"
+    }
+
+
+    if(!"total_col" %in% names(opts))
+    {
+        opts$total_col = "red"
+    }
+
+    if(!"total_lwd" %in% names(opts))
+    {
+        opts$total_lwd = 1
+    }
+    
+    if(!"total_lty" %in% names(opts))
+    {
+        opts$total_lty = 1
+    }
 
     if(!"xlab" %in% names(opts))
     {
-        opts$xlab = "Frequency"
+        opts$xlab = "frequency"
     }
 
+    if(!"ylab" %in% names(opts))
+    {
+        if(scaling != "none")
+        {
+            opts$ylab = paste(scaling, "amplitude")
+        }
+        else
+        {
+             opts$ylab = "amplitude"
+        }
+    }
     
     if(is.null(imf_list))
     {
         imf_list = seq(dim(hspec$amplitude)[2])
     }
 
-    if(is.null(imf_cols))
+    if(!"imf_cols" %in% names(opts))
     {
-        imf_cols = rainbow(length(imf_list), start = 0, end = 5/6)
+        if(show_total)
+        {
+            opts$imf_cols = rainbow(length(imf_list), start = 1/6, end = 5/6)
+        }
+        else
+        {
+            opts$imf_cols = rainbow(length(imf_list), start = 0, end = 5/6)
+        }
+    }
+   
+    if(!"imf_lwd" %in% names(opts))
+    {
+        opts$imf_lwd = rep(1, length(imf_list))
     }
 
-    if(!imf_sum)
+    if(!"imf_lty" %in% names(opts))
     {
-       pmax = max(hspec$amplitude)
-    }
-    else
-    {
-        pmax = max(apply(hspec$amplitude, 1, sum))
+        opts$imf_lty = rep(1, length(imf_list))
     }
 
-    plot(c(min(hspec$frequency), max(hspec$frequency)), c(min(hspec$amplitude), pmax), type = "n", ...)
-    if(!imf_sum)
+    if(!"fourier_col" %in% names(opts))
     {
-       for(k in imf_list)
+        opts$fourier_col = "black"
+    }
+
+    if(!"fourier_lty" %in% names(opts))
+    {
+        opts$fourier_lty = 1
+    }
+   
+    if(!"fourier_lwd" %in% names(opts))
+    {
+        opts$fourier_lwd = 1
+    }
+
+    if(!"scale_fourier" %in% names(opts))
+    {
+        opts$scale_fourier = FALSE
+    }
+    
+    pmin = Inf
+    pmax = -Inf
+
+    if(show_imfs)
+    {
+        imf_amp = hspec$amplitude[, imf_list]
+        pmin = min(imf_amp[imf_amp>0])
+        pmax = max(imf_amp)
+    }
+
+    if(show_total)
+    {
+        if(length(imf_list)>1)
+        {
+            total_amp = apply(hspec$amplitude[,imf_list], 1, sum)
+        }
+        else
+        {
+            total_amp = hspec$amplitude[,imf_list]
+        }
+        if(max(total_amp) > pmax)
+        {
+            pmax = max(total_amp[total_amp > 0])
+        }
+        if(min(total_amp) < pmin)
+        {
+            pmin = min(total_amp[total_amp > 0])
+        }
+    }
+
+     if(show_fourier)
+     {
+        fourier_freqs = seq(0, 1/(hspec$dt * 2), length.out = length(hspec$original_signal)-1)
+        fspec = Mod(fft(hspec$original_signal - mean(hspec$original_signal)))[1:length(hspec$original_signal)/2][fourier_freqs >= freq_span[1] & fourier_freqs <= freq_span[2]]
+        if(opts$scale_fourier)
+        {
+            fspec = fspec * pmax/max(fspec)
+        }
+        if(max(fspec) > pmax)
+        {
+            pmax = max(fspec)
+        }
+        if(min(fspec[fspec > 0]) < pmin)
+        {
+            pmin = min(fspec[fspec > 0])
+        }
+    }
+    
+    if(scaling == "log")
+    {
+        pmax = log10(pmax)
+        pmin = log10(pmin)
+    }
+
+    if(scaling == "sqrt")
+    {
+        pmax = sqrt(pmax)
+        pmin = sqrt(pmin)
+    }
+    
+    plot(c(min(hspec$frequency), max(hspec$frequency)), c(pmin, pmax), type = "n", xlab = opts$xlab, ylab = opts$ylab)
+
+    if(show_imfs)
+    {
+       for(k in seq(length(imf_list)))
        {
-           lines(hspec$frequency, hspec$amplitude[,k], col = imf_cols[k], lwd = opts$hilbert_lwd, lty = opts$hilbert_lty)
+
+           amp = imf_amp[,k]
+           if(scaling == "log")
+           {
+              amp = log10(amp)
+           }
+
+           if(scaling == "sqrt")
+           {
+               amp = sqrt(amp)
+           } 
+           lines(hspec$frequency[amp > -Inf], amp[amp > -Inf], col = opts$imf_cols[k], lwd = opts$imf_lwd[k], lty = opts$imf_lty[k])
        }
     }
-    else
-    {
-        lines(hspec$frequency, apply(hspec$amplitude, 1, sum), ...)
-    }
-}
-hhtransform <- function(imf_set)
-{
-    #Transform IMFs into instantaneous frequency and amplitude using the Hilbert transform
-    #INPUTS
-    #EMD_RESULT is the EMD decomposition of a signal returned by sig2imf.R
-    #Danny Bowman
-    #OUTPUTS
-    #  HHT is the Hilbert Transform of EMD_RESULT
-    #UNC Chapel Hill
    
-    
-   if("averaged_imfs" %in% names(imf_set))
+    if(show_total) 
     {
-        imf_set$imf=imf_set$averaged_imfs
+        if(scaling == "log")
+        {
+            total_amp = log10(total_amp)
+        }
+
+        if(scaling == "sqrt")
+        {
+            total_amp = sqrt(total_amp)
+        }
+
+        lines(hspec$frequency, total_amp, lwd = opts$total_lwd, lty = opts$total_lty, col = opts$total_col)
     }
 
-    tt=seq(from=0, by=imf_set$dt, length=length(imf_set$original_signal))
-    hht_result=imf_set
-    hilbert=hilbertspec(imf_set$imf,tt=tt)
-    hht_result$hamp=hilbert$amplitude
-    hht_result$hinstfreq=hilbert$instantfreq
-    invisible(hht_result)
+    if(show_fourier)
+    {
+
+        if(scaling == "log")
+        {
+            fspec = log10(fspec)
+        }
+
+        if(scaling == "sqrt")
+        {
+            fspec = sqrt(fspec)
+        }
+
+        lines(fourier_freqs[fourier_freqs >= freq_span[1] & fourier_freqs <= freq_span[2]], fspec, 
+            lty = opts$fourier_lty, lwd = opts$fourier_lwd, col = opts$fourier_col)
+    }
+
+    if(legend)
+    {
+        legend_labs = c()
+        legend_cols = c()
+        legend_lty = c()
+        legend_lwd = c()
+        if(show_total)
+        {
+            legend_labs = c(legend_labs, "Total Hilbert")
+            legend_cols = c(legend_cols, opts$total_col)
+            legend_lty = c(legend_lty, opts$total_lty)
+            legend_lwd = c(legend_lwd, opts$total_lwd) 
+        }
+        if(show_imfs) 
+        {
+            legend_labs = c(legend_labs, paste(rep("IMF", length(imf_list)), imf_list))
+            legend_cols = c(legend_cols, opts$imf_cols)
+            legend_lty = c(legend_lty, opts$imf_lty)
+            legend_lwd = c(legend_lwd, opts$imf_lwd)
+        }
+
+        if(show_fourier)
+        {
+            legend_labs = c(legend_labs, "Fourier")
+            legend_cols = c(legend_cols, opts$fourier_col)
+            legend_lty = c(legend_lty, opts$fourier_lty[1])
+            legend_lwd = c(legend_lwd, opts$fourier_lwd[1])
+        }
+        legend(opts$legend_location, legend = legend_labs, lty = legend_lty, lwd = legend_lwd, col = legend_cols)
+     }
 }
 
+central_difference <- function(sig, tt)
+{
+    #Calculate derivatives using the central difference method for a (possibly irregular) time series
+    #INPUTS
+    #    SIG is the time series
+    #    TT is the sample times, increasing only
+    #OUTPUTS
+    #    DSIG is the derivative of SIG
+
+    lx=length(sig)
+    f2=sig[3:lx]
+    t2 = tt[3:lx]
+    f1 = sig[1:(lx-2)]
+    t1 = tt[1:(lx - 2)]
+
+    #central difference
+    df0=(f2-f1)/(t2 - t1)
+
+    #forward difference for the first point
+    df1=(sig[2]-sig[1])/(tt[2] -tt[1])
+
+    #backward difference for the last point
+    df2=(sig[lx]-sig[lx-1])/(tt[lx] - tt[lx - 1])
+
+    dsig=c(df1,df0,df2)
+    invisible(dsig)
+}
+
+hilbert_transform <- function(sig)
+{
+   #Return the Hilbert transform of a signal.
+   #Code modified from the EMD package by Donghoh Kim and Hee-Seok Oh (http://dasan.sejong.ac.kr/~dhkim/software_emd.html)
+   #INPUTS
+   #    SIG - the signal to be transformed
+   #OUTPUTS
+   #    ASIG - the analytic_signal
+   ndata = length(sig)
+   h = rep(0, ndata)
+
+   if(ndata %% 2 == 0)
+   {
+       h[c(1, ndata/2+1)] = 1 
+       h[2:(ndata/2)] = 2 
+   }
+   else
+   {
+       h[1] = 1
+       h[2:((ndata + 1)/2)] = 2 
+   }
+
+   asig = fft(h * fft(sig), inverse = TRUE)/ndata
+   invisible(asig)
+} 
+
+instantaneous_frequency <- function(asig, tt)
+{
+    #Calculate instantaneous frequency via method outlined in Equation 6 of
+    #Dasios, A.; Astin, T. R. & McCann, C. Compressional-wave Q estimation from full-waveform sonic data 
+    #Geophysical Prospecting, 2001, 49, 353-373
+    #INPUTS
+    #    ASIG is the analytic signal 
+    #    TT is the sample times
+    #OUTPUTS
+    #    INSTFREQ is the instantaneous frequency 
+
+    dsig = central_difference(Re(asig), tt)
+    dhsig = central_difference(Im(asig), tt)
+
+    instfreq = (1/(2*pi))*(Re(asig)*dhsig - Im(asig)*dsig)/((Re(asig)^2) + (Im(asig)^2))
+    
+    invisible(instfreq)
+}
+    
+hilbert_envelope <- function(asig)
+{
+    #Calculate the envelope (instantaneous amplitude) of a signal.
+    #INPUTS
+    #    ASIG is the analytic signal
+    #OUTPUTS
+    #    ENVELOPE is the positive envelope of the signal
+
+    envelope = abs(asig)
+    invisible(envelope)
+}
+        
 plot_imfs <-function(sig, time_span, imf_list, original_signal, residue, fit_line=FALSE, lwd=1, cex=1, ...)
 {
     #Better IMF plotter
@@ -1225,7 +1509,7 @@ plot_imfs <-function(sig, time_span, imf_list, original_signal, residue, fit_lin
     segments(c(0,0,1, 0), c(0, 1, 1, 0), c(0,1, 1, 1), c(1,1, 0, 0), lwd=lwd) 
 }
 
-sig2imf <- function(sig, dt, emd_config)
+sig2imf <- function(sig, tt, emd_config)
 
 {
     #Extract IMFs
@@ -1234,7 +1518,7 @@ sig2imf <- function(sig, dt, emd_config)
     #I have modified their code and included some of it in this repository.
     #INPUTS
     #	SIG is the time series
-    #   DT is the sample rate
+    #   TT is the sample times 
     #	EMD_CONFIG controls how the EMD algorithm operations
     #         EMD_CONFIG$MAX_SIFT how many times the IMFs can be sifted
     #         EMD_CONFIG$MAX_IMF maximum number of IMFs that can be generated
@@ -1243,7 +1527,6 @@ sig2imf <- function(sig, dt, emd_config)
     #         EMD_CONFIG$BOUNDARY How the start and stop of the time series are handled duing the spline process.
     #         EMD_CONFIG$SM Spline smoothing
     #         EMD_CONFIG$SPAR Smoothing parameter (only needed if sm is not none)
-    #         EMD_CONFIG$WEIGHT Weight if "sm" is "spline"
     #         VERBOSE lets you know how many IMFs have been extracted.
 
     #OUTPUT is a list containing the original signal, IMFs, and information on EMD parameters.
@@ -1271,17 +1554,25 @@ sig2imf <- function(sig, dt, emd_config)
     #and zero crossings for S iterations.  S is arbitrary but Huang's tests indicate around 3-8 works well but this should be tested
     #per Huang et al 2003 for each type of data otherwise it is somewhat arbitrary.
 
-    tt=seq_len(length(sig))*dt
-    tt=tt[which(!is.na(sig))]
-    sig=sig[which(!is.na(sig))]
     emd_result=emd(sig, tt, max.sift=emd_config$max_sift, stoprule=emd_config$stop_rule, tol=emd_config$tol, 
-        boundary=emd_config$boundary,sm=emd_config$sm,spar=emd_config$spar,weight=emd_config$weight, 
+        boundary=emd_config$boundary,sm=emd_config$sm,spar=emd_config$spar, 
         check=FALSE, plot.imf=FALSE,max.imf=emd_config$max_imf)
     emd_result$original_signal=sig
-    emd_result$dt=dt
+    emd_result$tt=tt
     for(pname in names(emd_config))
     {
         emd_result[pname]=emd_config[pname]
+    }
+  
+    emd_result$hinstfreq = array(rep(0, length(emd_result$original_signal) * emd_result$nimf), dim = c(length(emd_result$original_signal), emd_result$nimf))
+    emd_result$hamp = emd_result$hinstfreq
+    
+    for(i in seq(emd_result$nimf))
+    {
+        imf = emd_result$imf[,i]
+        aimf = hilbert_transform(imf)
+        emd_result$hinstfreq[, i] = instantaneous_frequency(aimf, tt)
+        emd_result$hamp[, i] = hilbert_envelope(aimf)
     }
     invisible(emd_result)
 }
