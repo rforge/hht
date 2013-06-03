@@ -1509,26 +1509,30 @@ plot_imfs <-function(sig, time_span, imf_list, original_signal, residue, fit_lin
     segments(c(0,0,1, 0), c(0, 1, 1, 0), c(0,1, 1, 1), c(1,1, 0, 0), lwd=lwd) 
 }
 
-sig2imf <- function(sig, tt, emd_config)
+sig2imf <- function(sig, tt, emd_config = list(tol = 5, max_sift = 200, stop_rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL))
 
 {
     #Extract IMFs
     #This function is intended to take data, recover IMFs, and save them
-    #It calls and runs code developed by Donghoh Kim, Hee-Seok Oh as part of the "EMD" package available on CRAN.
-    #I have modified their code and included some of it in this repository.
+    #It calls and runs code developed by Donghoh Kim and Hee-Seok Oh as part of the "EMD" package available on CRAN.
+    #Refer to their documentation for details on the EMD algorithm as implemented here.
     #INPUTS
     #	SIG is the time series
     #   TT is the sample times 
-    #	EMD_CONFIG controls how the EMD algorithm operations
-    #         EMD_CONFIG$MAX_SIFT how many times the IMFs can be sifted
-    #         EMD_CONFIG$MAX_IMF maximum number of IMFs that can be generated
-    #         EMD_CONFIG$TOL Sifting stop criterion.
-    #         EMD_CONFIG$STOP_RULE Make sure to read section on stop rules and make sure you understand what they imply!
-    #         EMD_CONFIG$BOUNDARY How the start and stop of the time series are handled duing the spline process.
-    #         EMD_CONFIG$SM Spline smoothing
-    #         EMD_CONFIG$SPAR Smoothing parameter (only needed if sm is not none)
-    #         VERBOSE lets you know how many IMFs have been extracted.
-
+    #	EMD_CONFIG controls how the EMD algorithm operates. This documentation adapted from the "emd" function documentation in the EMD package, current as of June 2013
+    #         EMD_CONFIG$MAX_SIFT stop sifting after this many times
+    #         EMD_CONFIG$STOP_RULE as quoted from the EMD package:  "stopping rule of sifting. The type1 stopping rule indicates that absolute values 
+    #         of envelope mean must be less than the user-specified tolerance level in the sense
+    #         that the local average of upper and lower envelope is zero. The stopping rules
+    #         type2, type3, type4 and type5 are the stopping rules given by equation (5.5)
+    #         of Huang et al. (1998), equation (11a), equation (11b) and S stoppage of Huang
+    #         and Wu (2008), respectively."
+    #         EMD_CONFIG$BOUNDARY - how the beginning and end of the signal are handled
+    #         EMD_CONFIG$SM - Specifies how the signal envelope is constructed, see Kim et al, 2012.
+    #         EMD_CONFIG$SMLEVELS - Specifies what level of the IMF is obtained by smoothing other than interpolation - not sure what this means
+    #         EMD_CONFIG$SPAR - User-defined smoothing parameter for spline, kernal, or local polynomial smoothign
+    #         EMD_CONFIG$MAX_IMF - How many IMFs are allowed, IMFs above this number will not be recorded
+    #         EMD_CONFIG$INTERM - specifies vector of periods to be excluded from IMFs to cope with mode mixing.  I do not use this; instead I use the EEMD method.
     #OUTPUT is a list containing the original signal, IMFs, and information on EMD parameters.
     #Danny Bowman
     #UNC Chapel Hill
@@ -1576,3 +1580,91 @@ sig2imf <- function(sig, tt, emd_config)
     }
     invisible(emd_result)
 }
+
+precision_tester <- function(tt = seq(0, 10, by = 0.01), a = 1, b = 1, c = 1, omega_1 = 2 * pi, omega_2 = 4 * pi, phi_1 = 0, phi_2 = pi/6, plot_signal = TRUE, plot_instfreq = TRUE, plot_error = TRUE, ...)
+{
+    #This function computes the instantaeous frequency of a signal of the form
+    # a sin(omega_1 t + phi_1) + b sin(omega_2 + phi_2) + c
+    #where a, b, c, omega_1, omega_2, phi_1, and phi_2 are real numbers.
+    #The instantaneous frequency is calculated in two ways:
+
+    #1.  An exact analytic expression calulated for signals of this form using Equation 6 in 
+    #Dasios, A.; Astin, T. R. & McCann, C. Compressional-wave Q estimation from full-waveform sonic data 
+    #Geophysical Prospecting, 2001, 49, 353-373.
+    #An exact expression can be derived through the liberal use of algebra and trigonometric identities, see http://www.unc.edu/~haksaeng/hht/analytic_instantaneous_freq.pdf
+
+    #2.  Using the numeric method presented in this R package (i.e. the functions hilbert_transform and instantaneous_frequency)
+    
+    #The PRECISION_TESTER function allows a comparison of these two methods - my hope is it may identify where the numeric method falls short.
+
+    #INPUTS
+    #    TT - sample times
+    #    A - Amplitude coefficient of first sinusoid
+    #    B - Amplitude coefficient of second sinusoid
+    #    C - Constant shift
+    #    OMEGA_1 - frequency of first sinusoid, in radians
+    #    OMEGA_2 - frequency of second sinusoid, in radians
+    #    PHI_1 - phase shift of first sinusoid, in radians
+    #    PHI_2 - phase shift of second sinusoid, in radians
+    #    PLOT_SIGNAL - If TRUE, show the sinusoid defined by the above parameters
+    #    PLOT_INSTFREQ - If TRUE, plot the analytic and numeric instantaneous frequencies against each other
+    #    PLOT_ERROR - If TRUE, plot the error between the analytic and numeric instantaneous frequencies
+    #    ... passes plot parameters to plotter
+    #OUTPUTS
+    #    INSTFREQ is the instantaneous frequency and the time series
+    #        INSTFREQ$SIG is the  time series defined by the input parameters
+    #        INSTFREQ$ANALYTIC is the analytically calculated frequency
+    #        INSTFREQ$NUMERIC is the frequency calculated via this package's numeric algorithm
+
+    A = sin(omega_1 * tt + phi_1)
+    B = sin(omega_2 * tt + phi_2)
+    C = cos(omega_1 * tt + phi_1)
+    D = cos(omega_2 * tt + phi_2)
+   
+    #Time series
+    sig = a * A + b * B  + c
+
+    #Instantaneous frequency derived analytically
+
+    num = omega_1 * a^2 + omega_2 * b^2 + a * b * (omega_1 + omega_2) * (A * B + C * D) + c * (omega_1 * a * A + omega_2 * b * B)
+    denom = a^2 + 2 * a * b * (A * B + C * D) + 2 * c * (a * A + b * B) + b^2 + c^2
+
+    analytic_instfreq = num / (denom * 2 * pi)
+
+    #Instantaneous frequency derived numerically
+
+    asig = hilbert_transform(sig)
+
+    numeric_instfreq = instantaneous_frequency(asig, tt)
+
+    #PLOTTING 
+
+    if(plot_signal)
+    {
+        dev.new()
+        plot(tt, sig, type = "l", xlab = "Time", ylab = "Amplitude", main = "Time series", ...)
+    }
+
+    if(plot_instfreq)
+    {
+        dev.new()
+        ylow = min(c(min(analytic_instfreq), min(numeric_instfreq)))
+        yhigh = max(c(max(analytic_instfreq), max(numeric_instfreq)))
+        plot(tt, analytic_instfreq, type = "l", col = "red", ylim = c(ylow, yhigh), xlab = "Time", ylab = "Frequency", main = "Analytically and numerically derived values for instantaneous frequency", ...)
+        points(tt, numeric_instfreq, ...)
+        legend("topright", lty = c(1, NA), pch = c(NA, 1), legend = c("Analytic", "Numeric"), col = c("black", "red"))
+    }
+
+    if(plot_error)
+    {
+        dev.new()
+        plot(tt, analytic_instfreq - numeric_instfreq, type = "l", xlab = "Time", ylab = "Frequency Error", main = "Numerically derived instantaneous frequency subtracted from analytically derived instantaneous frequency", ...)
+    }
+
+    instfreq = list(sig = sig, analytic = analytic_instfreq, numeric = numeric_instfreq)
+    invisible(instfreq)
+}
+
+
+
+

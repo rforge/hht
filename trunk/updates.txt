@@ -31,10 +31,14 @@ Items that have been addressed
 #5 - Made my own evolfft
 #7 - Improved hh_render, I think it is slightly faster (possibly at the
 expense of hhspec_image)
+#8 Done
 #9 Done
 #10 - Probably needs more testing
 #11 - Par has been removed completely
 #12 - More or less
 #13 - incorporated into hh_render
 #14 - Done
+#15 - Sent to Donghoh Kim (author of the EMD package) for evaluation.  The
+stop rule is not very precise, and I am suspicious.
 #16 - Done
+#17 - Done
