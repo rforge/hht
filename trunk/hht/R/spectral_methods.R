@@ -1,32 +1,3 @@
-central_difference <- function(sig, tt)
-{
-    #Calculate derivatives using the central difference method for a (possibly irregular) time series
-    #INPUTS
-    #    SIG is the time series
-    #    TT is the sample times, increasing only
-    #OUTPUTS
-    #    DSIG is the derivative of SIG
-
-    lx=length(sig)
-    f2=sig[3:lx]
-    t2 = tt[3:lx]
-    f1 = sig[1:(lx-2)]
-    t1 = tt[1:(lx - 2)]
-
-    #central difference
-    df0=(f2-f1)/(t2 - t1)
-
-    #forward difference for the first point
-    df1=(sig[2]-sig[1])/(tt[2] -tt[1])
-
-    #backward difference for the last point
-    df2=(sig[lx]-sig[lx-1])/(tt[lx] - tt[lx - 1])
-
-    dsig=c(df1,df0,df2)
-    invisible(dsig)
-}
-
-
 cosine_taper <- function(x, taper = 0.1)
 {
     #Copied verbatim from the RSEIS package ver. 3.0-6 by Jonathan M. Lees
@@ -195,7 +166,7 @@ hilbert_transform <- function(sig)
    invisible(asig)
 } 
 
-instantaneous_frequency <- function(asig, tt)
+instantaneous_frequency <- function(asig, tt, method = "arctan", lag = 1)
 {
     #Calculate instantaneous frequency via method outlined in Equation 6 of
     #Dasios, A.; Astin, T. R. & McCann, C. Compressional-wave Q estimation from full-waveform sonic data 
@@ -203,15 +174,39 @@ instantaneous_frequency <- function(asig, tt)
     #INPUTS
     #    ASIG is the analytic signal 
     #    TT is the sample times
+    #    METHOD is the way the differentiation is performed. "arctan" uses the arctangent of the real and imaginary parts of the Hilbert transform, taking the derivative of phase for frequency
+    #    "chain" uses the analytical derivative of the arctangent function prior to performing the calculation 
+    #    One must be cautious when using these two methods - they should be tested using precision_tester on signals with similar frequency and sample rate
+    #    LAG determines the order of differentiation.  The default is 2 (central difference method), but this may be unstable at frequencies approaching the Nyquist frequency.
     #OUTPUTS
     #    INSTFREQ is the instantaneous frequency 
 
-    dsig = central_difference(Re(asig), tt)
-    dhsig = central_difference(Im(asig), tt)
+    if(!method %in% c("arctan", "chain"))
+    {
+        stop(paste("Did not recognize frequency calculation method:", method, "Please use either arctan or chain.", sep = " "))
+    }
 
-    instfreq = (1/(2*pi))*(Re(asig)*dhsig - Im(asig)*dsig)/((Re(asig)^2) + (Im(asig)^2))
+    if(method == "arctan") #This is the method used in the EMD package
+    {
+        phase = atan2(Im(asig), Re(asig))
+        d = c(0, -diff(phase))
+        p = 2 * pi  * ((d > pi) - (d < -pi))
+        unphase = phase + cumsum (p)
+        instfreq = abs(diff(unphase, lag) / diff(tt, lag))
+        instfreq = abs(instfreq[-length(instfreq)] + instfreq[-1])/2 
+        instfreq =  c(rep(instfreq[1], 1), instfreq, rep(instfreq[length(instfreq)], lag))
+    }
     
-    invisible(instfreq)
+    if(method == "chain") #Dasios et al 2001 "Compressional-wave Q estimation from full-waveform sonic data," Equation 6
+    {
+        dsig = diff(Re(asig), lag)/diff(tt, lag)
+        dsig = c(rep(dsig[1], 1), dsig, rep(dsig[length(dsig)], lag - 1))
+        dhsig = diff(Im(asig), lag)/diff(tt, lag)
+        dhsig = c(rep(dhsig[1]), dhsig, rep(dhsig[length(dhsig)], lag - 1))
+        instfreq = (Re(asig)*dhsig - Im(asig)*dsig)/((Re(asig)^2) + (Im(asig)^2))
+    }
+    
+    invisible(instfreq/(2 * pi))
 }
     
 
@@ -286,7 +281,7 @@ precision_tester <- function(tt = seq(0, 10, by = 0.01), a = 1, b = 1, c = 1, om
         yhigh = max(c(max(analytic_instfreq), max(numeric_instfreq)))
         plot(tt, analytic_instfreq, type = "l", col = "red", ylim = c(ylow, yhigh), xlab = "Time", ylab = "Frequency", main = "Analytically and numerically derived values for instantaneous frequency", ...)
         points(tt, numeric_instfreq, ...)
-        legend("topright", lty = c(1, NA), pch = c(NA, 1), legend = c("Analytic", "Numeric"), col = c("black", "red"))
+        legend("topright", lty = c(1, NA), pch = c(NA, 1), legend = c("Analytic", "Numeric"), col = c("red", "black"))
     }
 
     if(plot_error)

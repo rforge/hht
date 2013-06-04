@@ -48,20 +48,19 @@ Of course, the sensible way to do Fourier analysis for a stationary signal such 
 <<eval=FALSE>>=
 library(hht)
 dt=0.01
-tt=seq_len(10000)*dt
+tt=seq_len(50000)*dt
 sig=0.5*sin(pi*tt/10)+sin(2*pi*tt)+0.5*sin(10*pi*tt)+0.5*sin(40*pi*tt)
-emd_config=list()
-emd_config$max_sift=200
-emd_config$max_imf=100
-emd_config$tol=5
-emd_config$stop_rule="type5"
-emd_config$boundary="wave"
-emd_config$sm="none"
-emd_config$spar=NA
-emd_config$weight=20
+max_sift=200
+max_imf=100
+tol=5
+stop_rule="type5"
+boundary="wave"
+sm="none"
+spar=NULL
 
-emd_result=sig2imf(sig, dt, emd_config)
-emd_result=hhtransform(emd_result)
+emd_result=sig2imf(sig, tt, max_sift = max_sift,
+max_imf = max_imf, tol = tol, stop_rule = stop_rule, 
+boundary = boundary, sm = sm, spar = spar)
 @
 
 \textbf{Plot original signal and IMFs.}
@@ -76,16 +75,20 @@ plot_imfs(emd_result, time_span, imf_list, os, res)
 \textbf{Generate Hilbert spectrogram of the stacked sinusoidal signal.}
 
 <<eval=FALSE>>=
-max_freq=25
-freq_step=0.1
-hspec=hh_render(emd_result, max_freq, freq_step)
+sdt = 0.1 #Time resolution of spectrogram
+dfreq = 0.1 #Frequency resolution of spectrogram
+freq_span = c(0, 25)
+hspec=hh_render(emd_result, sdt, dfreq, freq_span, verbose = FALSE)
 @
 
 <<eval=FALSE>>=
-time_span=c(0, -1)
+time_span=c(20, 40)
 freq_span=c(0, 25)
 amp_span=c(0, 1)
-hhspec_image(hspec, time_span, freq_span, amp_span, cex=1)
+hhgram_image(hspec, time_span = time_span, freq_span = freq_span, 
+amp_span = amp_span, pretty = TRUE, 
+img_x_format = "%.0f", img_y_format = "%.0f", 
+colorbar_format = "%.0f", trace_format = "%.1f")
 @
 
 \textbf{Generate Fourier spectrogram}
@@ -96,7 +99,7 @@ ft$nfft=2048
 ft$ns=1000
 ft$nov=998
 amp_span=c(100,200)
-ftspec_image(sig, dt, ft, time_span, freq_span, amp_span, cex=1)
+ftspec_image(sig, dt, ft, time_span, freq_span, amp_span)
 @
 
 \FloatBarrier

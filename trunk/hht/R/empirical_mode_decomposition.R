@@ -295,7 +295,7 @@ eemd_resift <- function(eemd_result, emd_config, resift_rule)
 	invisible(resift_result)
 }
 
-sig2imf <- function(sig, tt, tol = 5, max_sift = 200, stop_rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL)
+sig2imf <- function(sig, tt, spectral_method = "arctan", diff_lag = 1, tol = 5, max_sift = 200, stop_rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL)
 
 {
     #Extract IMFs
@@ -305,6 +305,9 @@ sig2imf <- function(sig, tt, tol = 5, max_sift = 200, stop_rule = "type5", bound
     #INPUTS
     #	SIG is the time series
     #   TT is the sample times 
+    #   SPECTRAL_METHOD defines how to calculate instantaneous frequency - whether to use the arctangent of the analytic signal with numeric differentiation ("arctan")  
+    #   or the result of the chain rule applied to the arctangent, then numerically differentiated ("chain"); chain is dangerous at high frequencies
+    #   DIFF_LAG specifies if you want to do naive differentiation (DIFF_LAG = 1), central difference method (DIFF_LAG = 2) or higher difference methods (DIFF_LAG > 2)
     #   MAX_SIFT stop sifting after this many times
     #   STOP_RULE as quoted from the EMD package:  "stopping rule of sifting. The type1 stopping rule indicates that absolute values 
     #   of envelope mean must be less than the user-specified tolerance level in the sense
@@ -348,10 +351,15 @@ sig2imf <- function(sig, tt, tol = 5, max_sift = 200, stop_rule = "type5", bound
         check=FALSE, plot.imf=FALSE,max.imf=max_imf)
     emd_result$original_signal=sig
     emd_result$tt=tt
-    for(pname in names(emd_config))
-    {
-        emd_result[pname]=emd_config[pname]
-    }
+    emd_result$max_sift = max_sift
+    emd_result$tol = tol
+    emd_result$stop_rule = stop_rule
+    emd_result$boundary = boundary
+    emd_result$sm = sm
+    emd_result$smlevels = smlevels
+    emd_result$spar = spar
+    emd_result$max_imf = max_imf
+    emd_result$interm = interm
   
     emd_result$hinstfreq = array(rep(0, length(emd_result$original_signal) * emd_result$nimf), dim = c(length(emd_result$original_signal), emd_result$nimf))
     emd_result$hamp = emd_result$hinstfreq
@@ -360,7 +368,7 @@ sig2imf <- function(sig, tt, tol = 5, max_sift = 200, stop_rule = "type5", bound
     {
         imf = emd_result$imf[,i]
         aimf = hilbert_transform(imf)
-        emd_result$hinstfreq[, i] = instantaneous_frequency(aimf, tt)
+        emd_result$hinstfreq[, i] = instantaneous_frequency(aimf, tt, method = spectral_method, lag = diff_lag)
         emd_result$hamp[, i] = hilbert_envelope(aimf)
     }
     invisible(emd_result)

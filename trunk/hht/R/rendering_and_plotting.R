@@ -1,6 +1,6 @@
 # Plotting and data analysis functions
 
-ftspec_image <- function(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_span = NULL, taper = 0.05, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=TRUE, ...)
+ftspec_image <- function(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_span = NULL, taper = 0.05, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=FALSE, ...)
 {
 	#Plots a Fourier spectrogram
 	#INPUTS
@@ -70,7 +70,7 @@ ftspec_image <- function(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_sp
 
         if(is.null(amp_span))
         {    
-             amp_span = c(min(ev$z), max(ev$z))
+             amp_span = c(min(ev$z[ev$z>-Inf]), max(ev$z[ev$z<Inf]))
         }
 
         img = list()
@@ -100,8 +100,8 @@ ftspec_image <- function(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_sp
         trace = list()
         trace$sig = ev$original_signal[ev$tt >= time_span[1] & ev$tt <= time_span[2]]
         trace$tt = ev$tt[ev$tt >= time_span[1] & ev$tt <= time_span[2]]
-
-        hht_package_plotter(img, trace, opts$img_x_lab, opts$img_y_lab, window = ft$ns / length(sig), colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
+ 
+        hht_package_plotter(img, trace, opts$img_x_lab, opts$img_y_lab, window = FIX THISft$ns / length(time_span[2]x]), colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
  
         invisible(img)
 
@@ -823,7 +823,7 @@ hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL
     img_x_at=seq(image_x,image_x+image_xspan,length.out=length(img_x_labels))
     img_y_at=seq(image_y,image_y+image_yspan, length.out=length(img_y_labels))
     rect(image_x,image_y,image_x+image_xspan,image_y+image_yspan,col=rgb(red=backcol[1], green=backcol[2], blue=backcol[3], maxColorValue=255))
-    image(image_xvec,image_yvec, img$z, col=colormap,add=TRUE)
+    image(image_xvec,image_yvec, img$z, zlim = amp_span, col=colormap,add=TRUE)
     axis(2, pos=image_x, at=img_y_at,labels=img_y_labels, cex.axis=opts$cex.lab)
     axis(1,pos=image_y, at=img_x_at,labels=img_x_labels, cex.axis=opts$cex.lab)
 
@@ -881,20 +881,20 @@ hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL
     }
     if(colorbar)
     {
-        text(color_x+0.015, color_y-0.0125, sprintf(opts$colorbar_format, min(img$z[!is.na(img$z)])), cex=opts$cex.colorbar)
-        text(color_x+0.015, color_y+color_yspan+0.0125, sprintf(opts$colorbar_format, max(img$z[!is.na(img$z)])), cex=opts$cex.colorbar)
+        text(color_x+0.015, color_y-0.0125, sprintf(opts$colorbar_format, amp_span[1]), cex=opts$cex.colorbar)
+        text(color_x+0.015, color_y+color_yspan+0.0125, sprintf(opts$colorbar_format, amp_span[2]), cex=opts$cex.colorbar)
     }
  
 }
 
-plot_imfs <-function(sig, time_span, imf_list, original_signal, residue, fit_line=FALSE, lwd=1, cex=1, ...)
+plot_imfs <-function(sig, time_span = NULL, imf_list = NULL, original_signal = TRUE, residue = TRUE, fit_line=FALSE, lwd=1, cex=1, ...)
 {
     #Better IMF plotter
     #This function plots IMFs on the same plot so they can be checked for mode mixing or other problems.
     #It plots shifted traces in a single window
     #INPUTS
     #    SIG is the signal data structure returned by EEMD or EMD analysis
-    #    Note that SIG$AVERAGED_IMFS will be plotted instead of SIG$IMF, likewise SIG$AVERAGED_RESIDUE takes precidence
+    #    Note that SIG$AVERAGED_IMFS will be plotted instead of SIG$IMF, likewise SIG$AVERAGED_RESIDUE takes precedence
     #    over SIG$RESIDUE, if both exist.
     #        SIG$IMF is a N by M array where N is the length of the signal and M is the number of IMFs
     #        SIG$ORIGINAL_SIGNAL is the original signal before EEMD
@@ -910,16 +910,16 @@ plot_imfs <-function(sig, time_span, imf_list, original_signal, residue, fit_lin
     #    ... other parameters to pass to main plotting function
    
  
-    if(time_span[2]<0)
+    if(is.null(time_span))
     {
-        time_span[2]=length(sig$original_signal)*sig$dt
+        time_span = c(min(sig$tt), max(sig$tt))
     }
-    
-    if(time_span[1]==0)
+   
+    if(is.null(imf_list))
     {
-        time_span[1]=sig$dt
+        imf_list = 1:sig$nimf
     }
-    
+ 
     if("averaged_imfs" %in% names(sig))
     {
         sig$imf=sig$averaged_imfs
@@ -931,8 +931,8 @@ plot_imfs <-function(sig, time_span, imf_list, original_signal, residue, fit_lin
     }
 
 
-    time_ind=ceiling(time_span[1]/sig$dt):floor(time_span[2]/sig$dt)
-    tt=time_ind*sig$dt
+    time_ind = which(tt >= time_span[1] & tt <= time_span[2])
+    tt = sig$tt[time_ind]
     
     plot(c(0, 1), c(0, 1), type="n", axes=FALSE, xlab="Time (s)", ylab="", cex.lab=cex, ...)
     
@@ -997,7 +997,7 @@ plot_imfs <-function(sig, time_span, imf_list, original_signal, residue, fit_lin
             lines(ts, fline+trace_pos, lwd=lwd, col="red")
         }
     }
-    xax_labs=pretty(seq(min(tt)-sig$dt, max(tt), length.out=11))
+    xax_labs=pretty(seq(min(tt), max(tt), length.out=11))
     axis(1, pos=0, at=seq(0,1, length.out=length(xax_labs)), labels=xax_labs, cex.axis=cex)
     axis(2, pos=0, at=seq(sp/2, 1, by=sp), labels=yax_labs, cex.axis=cex)
     segments(c(0,0,1, 0), c(0, 1, 1, 0), c(0,1, 1, 1), c(1,1, 0, 0), lwd=lwd) 
