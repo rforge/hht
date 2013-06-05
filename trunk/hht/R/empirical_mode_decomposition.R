@@ -61,29 +61,37 @@ combine_trials <- function(in_dirs, out_dir, copy = TRUE)
    }
 }
 
-eemd <-function(sig, dt, trials, nimf, noise_amp, emd_config, trials_dir=NULL)
+eemd <-function(sig, tt, noise_amp, trials, nimf, trials_dir = NULL, verbose = TRUE, spectral_method = "arctan", diff_lag = 1, tol = 5, max_sift = 200, stop_rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL) 
 {
 	#Performs the Ensemble Empirical Mode Decomposition as described in Huang and Wu (2008) A Review on the Hilbert Huang Transform Method and its Applications to Geophysical Studies
 	#It runs EMD on a given signal for N=TRIALS
  	#Each IMF set is saved to disk in TRIALS_DIR, which is created if it does not exist already.
 	#Finally the EEMD function averages IMFs from all the trials together to produce an ensemble average and saves it in TRIALS_DIR 
 	#INPUTS
-	#	SIG is the time series to be analyzed
-	#	DT is the sample rate
-	#	TRIALS is the number of EMD analyses to be run
-	#	NIMF is the number of IMFs to save; IMFs past this number will not be averaged
-        #       NOISE_AMP determines what amplitude to make the white noise
-	#	EMD_CONFIG determines how the EMD algorithm operates.
-	#		EMD_CONFIG$MAX_SIFT how many times the IMFs can be sifted
-	#		EMD_CONFIG$MAX_IMF maximum number of IMFs that can be generated
-	#    	   	EMD_CONFIG$TOL Sifting stop criterion.
-        #		EMD_CONFIG$STOP_RULE Make sure to read section on stop rules and make sure you understand what they imply!
-        #		EMD_CONFIG$BOUNDARY How the start and stop of the time series are handled duing the spline process.
-        #		EMD_CONFIG$SM Spline smoothing
-        #		EMD_CONFIG$SPAR Smoothing parameter (only needed if sm is not none)
-        #		EMD_CONFIG$WEIGHT Weight if "sm" is "spline"
-	#	TRIALS_DIR is the location to store files generated during EEMD trials, if NULL then this program creates
-	#	a directory called "trials" in the current directory
+        #   SIG is the time series
+        #   TT is the sample times 
+        #   NOISE_AMP is the amplitude of the uniform random noise distribution
+        #   TRIALS is the number of times to run EMD
+        #   NIMF is the number of IMFs to be saved, IMFs past this number will be discarded
+        #   TRIALS_DIR is the directory in which to put the EMD runs, if NULL, make a directory called "trials".  If TRIALS_DIR does not already exist, make it.
+        #   VERBOSE - if TRUE, print progress
+        #   SPECTRAL_METHOD defines how to calculate instantaneous frequency - whether to use the arctangent of the analytic signal with numeric differentiation ("arctan")  
+        #   or the result of the chain rule applied to the arctangent, then numerically differentiated ("chain"); chain is dangerous at high frequencies
+        #   DIFF_LAG specifies if you want to do naive differentiation (DIFF_LAG = 1), central difference method (DIFF_LAG = 2) or higher difference methods (DIFF_LAG > 2)
+        #   MAX_SIFT stop sifting after this many times
+        #   STOP_RULE as quoted from the EMD package:  "stopping rule of sifting. The type1 stopping rule indicates that absolute values 
+        #   of envelope mean must be less than the user-specified tolerance level in the sense
+        #   that the local average of upper and lower envelope is zero. The stopping rules
+        #   type2, type3, type4 and type5 are the stopping rules given by equation (5.5)
+        #   of Huang et al. (1998), equation (11a), equation (11b) and S stoppage of Huang
+        #   and Wu (2008), respectively."
+        #   BOUNDARY - how the beginning and end of the signal are handled
+        #   SM - Specifies how the signal envelope is constructed, see Kim et al, 2012.
+        #   SMLEVELS - Specifies what level of the IMF is obtained by smoothing other than interpolation - not sure what this means
+        #   SPAR - User-defined smoothing parameter for spline, kernal, or local polynomial smoothign
+        #   MAX_IMF - How many IMFs are allowed, IMFs above this number will not be recorded
+        #   INTERM - specifies vector of periods to be excluded from IMFs to cope with mode mixing.  I do not use this; instead I use the EEMD method.
+        
 	#OUTPUTS are saved to TRIALS_DIR in variable EMD_RESULT
 	
 	if(is.null(trials_dir))
@@ -105,8 +113,9 @@ eemd <-function(sig, dt, trials, nimf, noise_amp, emd_config, trials_dir=NULL)
 	
 		noise=runif(length(sig),min=noise_amp*-1, max=noise_amp)
 		tmpsig=sig+noise
-                tt=seq_len(length(sig))*dt
-		emd_result=sig2imf(tmpsig,dt, emd_config)
+		emd_result=sig2imf(tmpsig,tt, spectral_method = spectral_method, diff_lag = diff_lag, 
+                   tol = tol, max_sift = max_sift, stop_rule = stop_rule, boundary = boundary, 
+                   sm = sm, smlevels = smlevels, spar = spar, max_imf = max_imf, interm = interm)
 		emd_result$noise=noise
 		emd_result$original_signal=tmpsig-noise
 		save(emd_result, file=paste(trials_dir, "/", "TRIAL_",sprintf("%05i",j),".RData",sep=""))
@@ -121,7 +130,10 @@ eemd <-function(sig, dt, trials, nimf, noise_amp, emd_config, trials_dir=NULL)
 		averaged_imfs[,1:trial_nimf]=averaged_imfs[,1:trial_nimf]+emd_result$imf[,1:trial_nimf]
 		averaged_noise=averaged_noise+noise
 		averaged_residue=averaged_residue+emd_result$residue
-		print(paste("TRIAL",as.character(j),"OF",as.character(trials),"COMPLETE"))
+                if(verbose)
+                {
+		    print(paste("TRIAL",as.character(j),"OF",as.character(trials),"COMPLETE"))
+                }
 	}
 }
 
@@ -203,7 +215,7 @@ eemd_compile<-function(trials_dir, trials, nimf)
         
 	eemd_result=c()
         eemd_result$nimf=length(real_imfs)
-        eemd_result$dt=emd_result$dt
+        eemd_result$tt=emd_result$tt
         eemd_result$original_signal=emd_result$original_signal
 	eemd_result$averaged_imfs=averaged_imfs
 	eemd_result$averaged_noise=averaged_noise
@@ -214,26 +226,34 @@ eemd_compile<-function(trials_dir, trials, nimf)
         invisible(eemd_result)
 }
 
-eemd_resift <- function(eemd_result, emd_config, resift_rule)
+eemd_resift <- function(eemd_result, resift_rule, spectral_method = "arctan", diff_lag = 1, tol = 5, max_sift = 200, stop_rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL)
 {
 	#Resifts averaged IMFs generated by EEMD to generate valid IMFs for Hilbert Transform
 	#INPUTS
 	#	EEMD_RESULT contains the averaged IMF set generated from EEMD.
-	#	EMD_PARAMS controls how the EMD of the averaged IMFs is handled.
-        #         EMD_CONFIG$MAX_SIFT how many times the IMFs can be sifted
-        #         EMD_CONFIG$MAX_IMF maximum number of IMFs that can be generated
-        #         EMD_CONFIG$TOL Sifting stop criterion.
-        #         EMD_CONFIG$STOP_RULE Make sure to read section on stop rules and make sure you understand what they imply!
-        #         EMD_CONFIG$BOUNDARY How the start and stop of the time series are handled duing the spline process.
-        #         EMD_CONFIG$SM Spline smoothing
-        #         EMD_CONFIG$SPAR Smoothing parameter (only needed if sm is not none)
-        #         EMD_CONFIG$WEIGHT Weight if "sm" is "spline"
-	#	RESIFT_RULE determines how the resifting occurs
-	#	If resift_rule is numeric, get the nth IMF (so if resift_rule is 2, get the 2nd resifted IMF)
-	#	If resift_rule is "last", return the last IMF.
-	#	If resift_rule is "max_var", return the IMF with the most variance
-	#	If resift_rule is "all", get all the IMFs returned by rerunning EMD on the averaged IMFs made by EEMD.
+        #       RESIFT_RULE determines how the resifting occurs
+        #       If resift_rule is numeric, get the nth IMF (so if resift_rule is 2, get the 2nd resifted IMF)
+        #       If resift_rule is "last", return the last IMF.
+        #       If resift_rule is "max_var", return the IMF with the most variance
+        #       If resift_rule is "all", get all the IMFs returned by rerunning EMD on the averaged IMFs made by EEMD.
 	#	This will likely be quite large.
+        #       SPECTRAL_METHOD defines how to calculate instantaneous frequency - whether to use the arctangent of the analytic signal with numeric differentiation ("arctan")  
+        #       or the result of the chain rule applied to the arctangent, then numerically differentiated ("chain"); chain is dangerous at high frequencies
+        #       DIFF_LAG specifies if you want to do naive differentiation (DIFF_LAG = 1), central difference method (DIFF_LAG = 2) or higher difference methods (DIFF_LAG > 2)
+        #       MAX_SIFT stop sifting after this many times
+        #       STOP_RULE as quoted from the EMD package:  "stopping rule of sifting. The type1 stopping rule indicates that absolute values 
+        #       of envelope mean must be less than the user-specified tolerance level in the sense
+        #       that the local average of upper and lower envelope is zero. The stopping rules
+        #       type2, type3, type4 and type5 are the stopping rules given by equation (5.5)
+        #       of Huang et al. (1998), equation (11a), equation (11b) and S stoppage of Huang
+        #       and Wu (2008), respectively."
+        #       BOUNDARY - how the beginning and end of the signal are handled
+        #       SM - Specifies how the signal envelope is constructed, see Kim et al, 2012.
+        #       SMLEVELS - Specifies what level of the IMF is obtained by smoothing other than interpolation - not sure what this means
+        #       SPAR - User-defined smoothing parameter for spline, kernal, or local polynomial smoothign
+        #       MAX_IMF - How many IMFs are allowed, IMFs above this number will not be recorded
+        #       INTERM - specifies vector of periods to be excluded from IMFs to cope with mode mixing.  I do not use this; instead I use the EEMD method.
+
 	#OUTPUTS
 	#	EEMD_RESULT$IMF a set of IMFs that are generated from the EEMD imfs.
 
@@ -250,7 +270,9 @@ eemd_resift <- function(eemd_result, emd_config, resift_rule)
 	{
 		if(sum(eemd_result$averaged_imfs[,k]==0)!=length(eemd_result$averaged_imfs[,k]))
 		{
-			emd_result=sig2imf(eemd_result$averaged_imfs[,k], eemd_result$dt, emd_config)
+			emd_result=sig2imf(eemd_result$averaged_imfs[,k], eemd_result$tt, spectral_method = spectral_method, diff_lag = diff_lag,
+                            tol = tol, max_sift = max_sift, stop_rule = stop_rule, boundary = boundary,
+                            sm = sm, smlevels = smlevels, spar = spar, max_imf = max_imf, interm = interm)
 			if(is.numeric(resift_rule))
 			{
 				if(emd_result$nimf>=resift_rule)
@@ -288,14 +310,21 @@ eemd_resift <- function(eemd_result, emd_config, resift_rule)
 		}
 	}
 	
-	resift_result$resift_emd_config=emd_config
+	resift_result$resift_max_sift = max_sift
+        resift_result$resift_tol = tol
+        resift_result$resift_stop_rule = stop_rule
+        resift_result$resift_boundary = boundary
+        resift_result$resift_sm = sm
+        resift_result$resift_smlevels = smlevels
+        resift_result$resift_spar = spar
+        resift_result$resift_max_imf = max_imf
+        resift_result$resift_interm = interm
 	resift_result$resift_rule=resift_rule
 	resift_result$nimf=dim(resift_result$imf)[2]
-	resift_result=hhtransform(resift_result)
 	invisible(resift_result)
 }
 
-sig2imf <- function(sig, tt, spectral_method = "arctan", diff_lag = 1, tol = 5, max_sift = 200, stop_rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL)
+sig2imf <- function(sig, tt, spectral_method = "arctan", diff_lag = 1, stop_rule = "type5", tol = 5, boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_sift = 200, max_imf = 100, interm = NULL)
 
 {
     #Extract IMFs
@@ -308,6 +337,7 @@ sig2imf <- function(sig, tt, spectral_method = "arctan", diff_lag = 1, tol = 5, 
     #   SPECTRAL_METHOD defines how to calculate instantaneous frequency - whether to use the arctangent of the analytic signal with numeric differentiation ("arctan")  
     #   or the result of the chain rule applied to the arctangent, then numerically differentiated ("chain"); chain is dangerous at high frequencies
     #   DIFF_LAG specifies if you want to do naive differentiation (DIFF_LAG = 1), central difference method (DIFF_LAG = 2) or higher difference methods (DIFF_LAG > 2)
+    #   TOL  determines what value is used to stop the sifting, this will depend on the chosen stop rule
     #   MAX_SIFT stop sifting after this many times
     #   STOP_RULE as quoted from the EMD package:  "stopping rule of sifting. The type1 stopping rule indicates that absolute values 
     #   of envelope mean must be less than the user-specified tolerance level in the sense

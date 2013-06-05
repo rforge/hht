@@ -11,24 +11,25 @@ eemd_resift(eemd_result, emd_config, resift_rule)
 }
 \arguments{
 \item{eemd_result}{The averaged IMF set and individual Hilbert spectra of EMD trials generated through EEMD.}
-\item{emd_config}{Configuration parameters for the resifting emd algorithm, see the \code{emd} function in the \code{EEMD} package for a detailed description of each option:}
-\itemize{
-    \item{\code{emd_config$max_sift}}{ maximum number of IMF sifts}
-    \item{\code{emd_config$max_imf}}{ maximum number of IMFs that can be returned}
-    \item{\code{emd_config$tol}}{ sifting stop criterion}
-    \item{\code{emd_config$stop_rule}}{ EMD stop rules}
-    \item{\code{emd_config$boundary}}{ how the start and stop of the time series are handled in the splining process}
-    \item{\code{emd_config$sm}}{ spline smoothing}
-    \item{\code{emd_config$spar}}{ smoothing parameter}
-    \item{\code{emd_config$weight}}{ spline weight}
-}
 \item{resift_rule}{How the resifting algorithm chooses which IMF to save}
 \itemize{
     \item{Integer - Which IMF in the resifted set will be saved (so if resift_rule=1, the first IMF will be saved, the rest will be discarded)}
     \item{``last'' - The last IMF will be saved (not terribly useful)}
     \item{``max_var'' - The IMF with the most variance will be saved.  This will get the most ``significant'' IMF out of each resifted set.}
     \item{``all'' - Every single new IMF generated from resifting the averaged IMFs will be saved.  There may be a lot of them!}}
+\item{spectral_method}{See \code{\link{sig2imf}}.}
+\item{diff_lag}{See \code{\link{sig2imf}}.}
+\item{tol}{See \code{\link{sig2imf}}.}
+\item{max_sift}{See \code{\link{sig2imf}}.}
+\item{stop_rule}{See \code{\link{sig2imf}}.}
+\item{boundary}{See \code{\link{sig2imf}}.}
+\item{sm}{See \code{\link{sig2imf}}.}
+\item{smlevels}{See \code{\link{sig2imf}}.}
+\item{spar}{See \code{\link{sig2imf}}.}
+\item{max_imf}{See \code{\link{sig2imf}}.}
+\item{interm}{See \code{\link{sig2imf}}.}
 }
+
 \details{
 The function \code{\link{eemd_compile}} generates a list of averaged IMFs from EEMD trials.
 These averaged IMFs often do not satisfy the definition of an IMF, usually because some of them are mixtures of different time scales.
@@ -50,16 +51,6 @@ Another solution is to accept the sub-IMF with the most variance, as that probab
 \examples{
 data(port_foster_event)
 
-emd_config=list()
-emd_config$max_sift=200
-emd_config$max_imf=100
-emd_config$tol=0.2
-emd_config$stop_rule="type5"
-emd_config$boundary="wave"
-emd_config$sm="none"
-emd_config$spar=NA
-emd_config$weight=20
-
 trials=10
 nimf=10
 noise_amp=6.4e-07
@@ -68,14 +59,14 @@ trials_dir="test"
 set.seed(628)
 
 #Run EEMD (this may take some time)
-\dontrun{eemd(sig, dt, trials, nimf, noise_amp, emd_config, trials_dir)}
+\dontrun{eemd(sig, tt, noise_amp, trials, nimf, noise_amp, trials_dir = trials_dir)}
 
 #Compile the results
 \dontrun{eemd_result=eemd_compile(trials_dir, trials, nimf)}
 
 
 resift_rule="max_var"
-\dontrun{resift_result=eemd_resift(eemd_result, emd_config, resift_rule)}
+\dontrun{resift_result=eemd_resift(eemd_result, resift_rule)}
 
 #Plot the IMFs
 time_span=c(5, 10)

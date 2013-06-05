@@ -14,7 +14,7 @@ ftspec_image <- function(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_sp
         #    FREQ_SPAN is the frequency span to plot (<=max frequency in spectrogram), NULL plots everything up to the Nyquist frequency
 	#    AMP_SPAN is the amplitude range to plot.  NULL plots everything.
         #    TAPER is the cosine taper factor (amount of the signal to apply the taper to, must be < 0.5)
-        #    SCALING determines whether to apply a natural log (ln), logarithmic (log), or square root (sqrt) scaling to the amplitude data
+        #    SCALING determines whether to apply a logarithmic (log), or square root (sqrt) scaling to the amplitude data
         #    GRID is a boolean asking whether to display grid lines
         #    COLORBAR is a boolean asking whether to plot an amplitude colorbar
         #    BACKCOL is a 3 element vector of RGB values for the background of the spectrogram, based on a 0 to 255 scale: [red, green, blue]
@@ -30,6 +30,7 @@ ftspec_image <- function(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_sp
         #       CEX.TRACE is the font size of the trace axis labels
         #       IMG_X_LAB is the X - axis label of the image, it defaults to "time"
         #       IMG_Y_LAB is the Y - axis label of the image, it defaults to "frequency" 
+        #       MAIN gives the figure a title.
         #OUTPUTS
         #    IMG is the spectrogram	
 	opts = list(...)

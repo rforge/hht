@@ -29,8 +29,8 @@ The trial files are saved in the directory specified by \code{out_dir}.
 }
 \examples{
 #Suppose you have run 3 different EEMD sets of 100 trials each and saved the results in eemd1, eemd2, eemd3, respectively:
-in_dirs=c("/home/user/eemd1", "/home/user/eemd2/", "/home/user/eemd3")
-out_dir="/home/user/all_trials"
+in_dirs <- c("/home/user/eemd1", "/home/user/eemd2/", "/home/user/eemd3")
+out_dir <- "/home/user/all_trials"
 \dontrun{combine_trials(in_dirs, out_dir)}
 #Now all your trials should be located in /home/user/all_trials, numbered 1 through 300
 }
