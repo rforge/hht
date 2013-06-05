@@ -324,27 +324,6 @@ sig2imf <- function(sig, tt, spectral_method = "arctan", diff_lag = 1, tol = 5, 
     #OUTPUT is a list containing the original signal, IMFs, and information on EMD parameters.
     #Danny Bowman
     #UNC Chapel Hill
-    
-    #NOTES ON STOP RULES
-    #These are rules to determine when sifting should stop and the result be saved as an IMF
-    #The rules are implemented in the dcb_extractimf, which is taken almost verbatim from the extractimf function in the EMD package.
-    #Here is how they work
-    #TYPE1
-    #type 1 finds the mean of the envelopes as defined by the spline function.  See Fig. 3b in Huang et al 1998:
-    #The envelope is the dotted lines, the mean is the solid line.  In an IMF, the authors of the EMD function
-    #think that this mean should be close to 0 (hence, below the defined tolerance).  This will force the IMF to be
-    #symmetric, but I am concerned it may err towards frequency modulation at the expense of amplitude.
-    #This criterion is not mentioned in literature I have read and they only cite Huang et al 1998 where
-    #it is certainly not mentioned at all.  Instead they have derived this criterion from the definition of an IMF:
-    #that at every point the mean defined by the local maximum and minimum envelope be zero.
-    #TYPE2
-    #Type 2 is the method used by Huang et al 1998.  It finds the standard deviation between two consecutive siftings;
-    #when the SD falls below a certain tolerance value the sifting stops.  Huang et al recommend a tolerance value of 0.2 or 0.3
-    #TYPE3
-    #Type 3 is my addition to the EMD package.  It implements the S stoppage criterion per Huang et al 2008 (further described in
-    #Huang et al 2003).  The S criterion means the sifting process stops when there has been no change in the number of extrema
-    #and zero crossings for S iterations.  S is arbitrary but Huang's tests indicate around 3-8 works well but this should be tested
-    #per Huang et al 2003 for each type of data otherwise it is somewhat arbitrary.
 
     emd_result=emd(sig, tt, max.sift=max_sift, stoprule=stop_rule, tol=tol, 
         boundary=boundary,sm=sm,spar=spar, 

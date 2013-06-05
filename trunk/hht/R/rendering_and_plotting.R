@@ -65,19 +65,21 @@ ftspec_image <- function(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_sp
                 warning("Requested maximum frequency is higher than the Nyquist frequency.")
         }
 
+        sig = sig[(time_span[1]/dt):(time_span[2]/dt)]
+        tt = (seq(length(sig)) * dt) + time_span[1]
+
 	ev=evolutive_fft(sig, dt, ft, freq_span, taper) #Calculate the Fourier spectrogram
-        ev$tt = seq(length(sig)) * dt
+        ev$tt = tt
 
         if(is.null(amp_span))
         {    
              amp_span = c(min(ev$z[ev$z>-Inf]), max(ev$z[ev$z<Inf]))
         }
-
-        img = list()
-        img$z = ev$z[ev$x >= time_span[1] & ev$x <= time_span[2], ev$y >= freq_span[1] & ev$y <= freq_span[2]]
-        img$x = ev$x[ev$x >= time_span[1] & ev$x <= time_span[2]]
-        img$y = ev$y[ev$y >= freq_span[1] & ev$y <= freq_span[2]]
-
+        img_xvec = ev$x + time_span[1]
+        img_yvec = seq(freq_span[1], freq_span[2], by = ev$y[2] - ev$y[1])
+        img = list(z = array(rep(0, length(img_xvec) * length(img_yvec)), dim = c(length(img_xvec), length(img_yvec))),
+              x = img_xvec, y = img_yvec)
+        img$z[,img_yvec >= min(ev$y) & img_yvec <= max(ev$y)] = ev$z[,ev$y >= freq_span[1] & ev$y <= freq_span[2]]
         img$z[img$z<amp_span[1]] = NA
         img$z[img$z>amp_span[2]] = amp_span[2]
         img$z[img$z == 0] = NA
@@ -100,8 +102,9 @@ ftspec_image <- function(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_sp
         trace = list()
         trace$sig = ev$original_signal[ev$tt >= time_span[1] & ev$tt <= time_span[2]]
         trace$tt = ev$tt[ev$tt >= time_span[1] & ev$tt <= time_span[2]]
- 
-        hht_package_plotter(img, trace, opts$img_x_lab, opts$img_y_lab, window = FIX THISft$ns / length(time_span[2]x]), colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
+       
+        window = ft$ns / (length(tt[tt >= min(img$x) & tt <= max(img$x)]))
+        hht_package_plotter(img, trace, amp_span, opts$img_x_lab, opts$img_y_lab, window = window, colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
  
         invisible(img)
 
@@ -391,7 +394,7 @@ hhgram_image <- function(hgram,time_span = NULL,freq_span = NULL, amp_span = NUL
         trace$sig = hgram$original_signal[hgram$tt >= time_span[1] & hgram$tt <= time_span[2]]
         trace$tt = hgram$tt[hgram$tt >= time_span[1] & hgram$tt <= time_span[2]]
 
-        hht_package_plotter(img, trace, opts$img_x_lab, opts$img_y_lab, imf_sum = imf_sum, colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
+        hht_package_plotter(img, trace, amp_span, opts$img_x_lab, opts$img_y_lab, imf_sum = imf_sum, colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
     
         invisible(img)
 }
@@ -677,7 +680,7 @@ hhspec_plot <- function(hspec, freq_span = NULL, scaling = "none", imf_list = NU
 
 
 
-hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL, window = NULL, colormap = NULL, backcol = c(0, 0, 0), pretty = FALSE, grid = TRUE, colorbar = TRUE, opts = list())
+hht_package_plotter <- function(img, trace, amp_span, img_x_lab, img_y_lab, imf_sum = NULL, window = NULL, colormap = NULL, backcol = c(0, 0, 0), pretty = FALSE, grid = TRUE, colorbar = TRUE, opts = list())
 {
     #Plots images and time series for Hilbert spectra, Fourier spectra, and cluster analysis.
     #This function is internal to the package and users should not be calling it.
@@ -690,6 +693,7 @@ hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL
     #    TRACE is the time series to plot at the top of the figure
     #        TRACE$SIG is the time series
     #        TRACE$TT is the time of each sample
+    #    AMP_SPAN are the maximum and minimum values of the image.
     #    IMG_X_LAB is the label of the X axis of the image
     #    IMG_Y_LAB is the label of the Y axis of the image
     #    IMF_SUM is a red line on the time series plot showing the sum of the plotted IMFs, if available
@@ -771,11 +775,17 @@ hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL
         pretty_y = pretty(img$y, n=5) 
         pretty_x = pretty_x[pretty_x <= max(img$x) & pretty_x >= min(img$x)]
         pretty_y = pretty_y[pretty_y <= max(img$y) & pretty_y >= min(img$y)]
+        if(!is.null(window))
+        {
+             window = window * ((max(img$x) - min(img$x))/(max(pretty_x) - min(pretty_x)))
+        }
         img$z = img$z[img$x <= max(pretty_x) & img$x >= min(pretty_x), img$y <= max(pretty_y) & img$y >= min(pretty_y)]
         img$x = img$x[img$x <= max(pretty_x) & img$x >= min(pretty_x)]
         img$y = img$y[img$y <= max(pretty_y) & img$y >= min(pretty_y)]
         img_x_labels=sprintf(opts$img_x_format, pretty_x)
         img_y_labels=sprintf(opts$img_y_format, pretty_y)
+        trace$sig = trace$sig[trace$tt >= min(pretty_x) & trace$tt<= max(pretty_x)]
+        trace$tt = trace$tt[trace$tt >= min(pretty_x) & trace$tt<= max(pretty_x)]
         cat("Adjusting Time and Frequency limits to nice looking numbers (the \"pretty\" option is currently set to TRUE)\n")
     }    
     else 
@@ -818,8 +828,10 @@ hht_package_plotter <- function(img, trace, img_x_lab, img_y_lab, imf_sum = NULL
     image_x=0
     image_yspan=0.75
     image_xspan=0.9
-    image_xvec=seq(image_x, image_x+image_xspan, length.out=length(img$x))
-    image_yvec=seq(image_y, image_y+image_yspan, length.out=length(img$y))
+    pixel_width = image_xspan/(length(img$x) * 2)
+    pixel_height = image_yspan/(length(img$y) * 2)
+    image_xvec=seq(image_x + pixel_width, image_x+image_xspan - pixel_width, length.out=length(img$x))
+    image_yvec=seq(image_y + pixel_height, image_y+image_yspan - pixel_height, length.out=length(img$y))
     img_x_at=seq(image_x,image_x+image_xspan,length.out=length(img_x_labels))
     img_y_at=seq(image_y,image_y+image_yspan, length.out=length(img_y_labels))
     rect(image_x,image_y,image_x+image_xspan,image_y+image_yspan,col=rgb(red=backcol[1], green=backcol[2], blue=backcol[3], maxColorValue=255))

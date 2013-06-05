@@ -29,6 +29,7 @@ Items that have been addressed
 #3 - not really necessary
 #4 - not really necessary
 #5 - Made my own evolfft
+#6 - Done
 #7 - Improved hh_render, I think it is slightly faster (possibly at the
 expense of hhspec_image)
 #8 Done
@@ -42,3 +43,7 @@ expense of hhspec_image)
 stop rule is not very precise, and I am suspicious.
 #16 - Done
 #17 - Done
+
+TO DO STILL
+-Render "interesting signals", remember to update equation in example 3
+-Edit EEMD vignette

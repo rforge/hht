@@ -47,9 +47,9 @@ Of course, the sensible way to do Fourier analysis for a stationary signal such 
 \textbf{Set up signal and perform EMD}
 <<eval=FALSE>>=
 library(hht)
-dt=0.01
-tt=seq_len(50000)*dt
-sig=0.5*sin(pi*tt/10)+sin(2*pi*tt)+0.5*sin(10*pi*tt)+0.5*sin(40*pi*tt)
+dt=0.005
+tt=seq(dt, 50, by = dt)
+sig=0.5*sin(pi*tt/10)+sin(2*pi*tt)+0.5*sin(10*pi*tt)+0.5*sin(30*pi*tt)
 max_sift=200
 max_imf=100
 tol=5
@@ -65,7 +65,7 @@ boundary = boundary, sm = sm, spar = spar)
 
 \textbf{Plot original signal and IMFs.}
 <<eval=FALSE>>=
-time_span=c(0,40)
+time_span=c(0,50)
 imf_list=1:4
 os=TRUE
 res=FALSE
@@ -77,12 +77,12 @@ plot_imfs(emd_result, time_span, imf_list, os, res)
 <<eval=FALSE>>=
 sdt = 0.1 #Time resolution of spectrogram
 dfreq = 0.1 #Frequency resolution of spectrogram
-freq_span = c(0, 25)
+freq_span = c(0, 30)
 hspec=hh_render(emd_result, sdt, dfreq, freq_span, verbose = FALSE)
 @
 
 <<eval=FALSE>>=
-time_span=c(20, 40)
+time_span=c(0, 50)
 freq_span=c(0, 25)
 amp_span=c(0, 1)
 hhgram_image(hspec, time_span = time_span, freq_span = freq_span, 
@@ -95,11 +95,13 @@ colorbar_format = "%.0f", trace_format = "%.1f")
 
 <<eval=FALSE>>=
 ft=list()
-ft$nfft=2048
-ft$ns=1000
-ft$nov=998
-amp_span=c(100,200)
-ftspec_image(sig, dt, ft, time_span, freq_span, amp_span)
+ft$nfft=4096
+ft$ns=10/dt
+ft$nov=ft$ns - ft$ns * 0.002
+amp_span=c(100,800)
+ftspec_image(sig, dt, ft, time_span, freq_span, amp_span,
+img_x_format = "%.0f", img_y_format = "%.0f",
+colorbar_format = "%.0f", trace_format = "%.1f", pretty = TRUE)
 @
 
 \FloatBarrier
@@ -157,19 +159,20 @@ This and other shortcomings of the EMD method are discussed extensively in D\"{a
 <<eval=FALSE>>=
 library(hht)
 dt=0.05
-tt=seq_len(10000)*dt
+tt = seq(dt, 50, by = dt)
 sig=sin(2*pi*tt)+0.25*sin(4*pi*tt)
-emd_config=list()
-emd_config$max_sift=200
-emd_config$max_imf=100
-emd_config$tol=5
-emd_config$stop_rule="type5"
-emd_config$boundary="wave"
-emd_config$sm="none"
-emd_config$spar=NA
-emd_config$weight=20
-emd_result=sig2imf(sig, dt, emd_config)
-time_span=c(20, 30)
+max_sift=200
+max_imf=100
+tol=5
+stop_rule="type5"
+boundary="wave"
+sm="none"
+spar=NULL
+emd_result=sig2imf(sig, tt, max_sift = max_sift,
+max_imf = max_imf, tol = tol, stop_rule = stop_rule,
+boundary = boundary, sm = sm, spar = spar)
+
+time_span = c(20, 30)
 imf_list=c(1)
 os=TRUE
 res=FALSE
@@ -180,30 +183,35 @@ plot_imfs(emd_result, time_span, imf_list, os, res, fit_line)
 
 \textbf{Hilbert spectrogram}
 <<eval=FALSE>>=
-emd_result=hhtransform(emd_result)
-max_freq=4
-freq_step=0.1
-imf_list=c(1)
-hspec=hh_render(emd_result, max_freq, freq_step, imf_list)
+freq_span = c(0, 4)
+sdt=0.1
+dfreq = 0.1
+hspec=hh_render(emd_result, sdt, dfreq, freq_span, verbose = FALSE)
 @
 
 <<eval=FALSE>>=
-time_span=c(20, 30)
+time_span=c(10, 40)
 freq_span=c(0, 3)
-amp_span=c(0, -1)
-hhspec_image(hspec, time_span, freq_span, amp_span, cex=1)
+hhgram_image(hspec, time_span = time_span, freq_span = freq_span,
+imf_list = c(1),  pretty = TRUE,
+img_x_format = "%.0f", img_y_format = "%.0f",
+colorbar_format = "%.0f", trace_format = "%.1f")
+
 @
 
 \textbf{Fourier spectrogram}
 <<eval=FALSE>>=
 ft=list()
 ft$nfft=4096
-ft$ns=2000
-ft$nov=1998
-time_span=c(0, -1)
+ft$ns=300
+ft$nov=290
+time_span=NULL
 freq_span=c(0, 3)
-amp_span=c(90, 200)
-ftspec_image(sig, dt, ft, time_span, freq_span, amp_span, cex=1)
+amp_span=c(20, 150)
+ftspec_image(sig, dt, ft, time_span, freq_span, amp_span,
+img_x_format = "%.0f", img_y_format = "%.1f",
+colorbar_format = "%.0f", trace_format = "%.1f", pretty = TRUE)
+
 @
 
 \subsection{Figures}
@@ -239,7 +247,7 @@ Evidently IMF 1 contains almost all the variability of the signal.}
 \FloatBarrier
 
 \section{Nonlinear and Nonstationary Signal}
-
+UPDATE EQUATION
 While the Fourier spectrogram is essentially equivalent to or superior to the Hilbert spectrogram for linear and stationary signals,
 the true power of the HHT emerges when the signals are neither linear nor stationary.
 Here, we investigate a frequency modulated wave with a normal taper combined with high and low frequency sinusoidal waves:
@@ -264,20 +272,21 @@ This issue is addressed in the vignette ``Improving the Performance of the HHT u
 <<label=nonlinstaimfs,include=FALSE>>=
 library(hht)
 dt=0.01
-tt=seq_len(10000)*dt
-sig=sin(2*pi*tt+0.5*sin(pi*tt))*exp(-(tt-50)^2/100)+sin(pi*tt/10)
-emd_config=list()
-emd_config$max_sift=200
-emd_config$max_imf=100
-emd_config$tol=5
-emd_config$stop_rule="type5"
-emd_config$boundary="wave"
-emd_config$sm="none"
-emd_config$spar=NA
-emd_config$weight=20
-emd_result=sig2imf(sig, dt, emd_config)
+tt = seq(dt, 200, by = dt)
+sig=sin(2*pi*tt+0.5*sin(pi*tt/4))*exp(-(tt-100)^2/750)+sin(pi*tt/10)*exp(-(tt-100)^2/500)
 
-time_span=c(0, -1)
+max_sift=200
+max_imf=100
+tol=5
+stop_rule="type5"
+boundary="none"
+sm="none"
+spar=NULL
+emd_result=sig2imf(sig, tt, max_sift = max_sift,
+max_imf = max_imf, tol = tol, stop_rule = stop_rule,
+boundary = boundary, sm = sm, spar = spar)
+
+time_span = NULL
 imf_list=c(1:2)
 os=TRUE
 res=TRUE
@@ -287,27 +296,36 @@ plot_imfs(emd_result, time_span, imf_list, os, res)
 \textbf{Hilbert spectrogram}
 
 <<>>=
-emd_result=hhtransform(emd_result)
-max_freq=5
-freq_step=0.05
-hspec=hh_render(emd_result, max_freq, freq_step)
+freq_span = c(0, 3)
+sdt=1
+dfreq = 0.01
+hspec=hh_render(emd_result, sdt, dfreq, freq_span, verbose = FALSE)
+
 @
 
 <<label=nonlinstaht, include=FALSE>>=
-time_span=c(0, 100)
-freq_span=c(0, 2.5)
-amp_span=c(0, 1)
-hhspec_image(hspec, time_span, freq_span, amp_span, cex=1)
+time_span=c(40, 160)
+freq_span=c(0, 2)
+amp_span=c(0.1, 1)
+hhgram_image(hspec, time_span = time_span, freq_span = freq_span, amp_span = amp_span,
+img_x_format = "%.0f", 
+colorbar_format = "%.1f", trace_format= "%.1f",
+img_y_format = "%.1f", pretty = TRUE)
 @
 
 \textbf{Fourier spectrogram}
 <<label=nonlinstaft, include=FALSE>>=
 ft=list()
-ft$nfft=4096
-ft$ns=2000
-ft$nov=1998
-amp_span=c(100,200)
-ftspec_image(sig, dt, ft, time_span, freq_span, amp_span, cex=1)
+ft$nfft=16384
+ft$ns=1000
+ft$nov=990
+time_span = c(40, 160)
+freq_span = c(0, 2)
+amp_span=c(100,500)
+ftspec_image(sig, dt, ft, freq_span = freq_span,
+amp_span = amp_span, img_x_format = "%.0f",
+colorbar_format = "%.0f", trace_format= "%.1f",
+img_y_format = "%.1f", pretty = TRUE)
 @
 
 \FloatBarrier
