@@ -433,7 +433,7 @@ ft$nov=29
 time_span=c(5, 10)
 freq_span=c(0, 25)
 amp_span=c(0.00001, 0.001)
-ftspec_image(ft, time_span, freq_span, amp_span)
+fgram_image(ft, time_span, freq_span, amp_span)
 @
 
 \subsection{Figures}

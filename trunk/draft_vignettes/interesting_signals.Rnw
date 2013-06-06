@@ -99,7 +99,7 @@ ft$nfft=4096
 ft$ns=10/dt
 ft$nov=ft$ns - ft$ns * 0.002
 amp_span=c(100,800)
-ftspec_image(sig, dt, ft, time_span, freq_span, amp_span,
+fgram_image(sig, dt, ft, time_span, freq_span, amp_span,
 img_x_format = "%.0f", img_y_format = "%.0f",
 colorbar_format = "%.0f", trace_format = "%.1f", pretty = TRUE)
 @
@@ -208,7 +208,7 @@ ft$nov=290
 time_span=NULL
 freq_span=c(0, 3)
 amp_span=c(20, 150)
-ftspec_image(sig, dt, ft, time_span, freq_span, amp_span,
+fgram_image(sig, dt, ft, time_span, freq_span, amp_span,
 img_x_format = "%.0f", img_y_format = "%.1f",
 colorbar_format = "%.0f", trace_format = "%.1f", pretty = TRUE)
 
@@ -322,7 +322,7 @@ ft$nov=990
 time_span = c(40, 160)
 freq_span = c(0, 2)
 amp_span=c(100,500)
-ftspec_image(sig, dt, ft, freq_span = freq_span,
+fgram_image(sig, dt, ft, freq_span = freq_span,
 amp_span = amp_span, img_x_format = "%.0f",
 colorbar_format = "%.0f", trace_format= "%.1f",
 img_y_format = "%.1f", pretty = TRUE)

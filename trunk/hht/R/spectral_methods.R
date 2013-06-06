@@ -1,33 +1,3 @@
-cosine_taper <- function(x, taper = 0.1)
-{
-    #Copied verbatim from the RSEIS package ver. 3.0-6 by Jonathan M. Lees
-    #INPUTS
-    #    X is the signal to taper
-    #    TAPER is the fraction of the signal to apply tapering to (greater than 0, less than 0.5) 
-    #OUTPUTS
-    #    X is the tapered signal
-    if (any(taper < 0) || any(taper > 0.5)) 
-        stop("'taper' must be between 0 and 0.5")
-    a <- attributes(x)
-    x <- as.matrix(x)
-    nc <- ncol(x)
-    if (length(taper) == 1) 
-        taper <- rep(taper, nc)
-    else if (length(taper) != nc) 
-        stop("length of 'taper' must be 1 or equal the number of columns of 'x'")
-    nr <- nrow(x)
-    for (i in 1:nc) {
-        m <- floor(nr * taper[i])
-        if (m == 0) 
-            next
-        w <- 0.5 * (1 - cos(pi * seq.int(1, 2 * m - 1, by = 2)/(2 * 
-            m)))
-        x[, i] <- c(w, rep(1, nr - 2 * m), rev(w)) * x[, i]
-    }
-    attributes(x) <- a
-    x
-}
-
 evolutive_fft <- function(sig, dt, ft, freq_span, taper = 0.05)
 {
     #Calculates the evolutive Fourier spectrogram for use in FTSPEC_IMAGE
@@ -100,7 +70,7 @@ evolutive_fft <- function(sig, dt, ft, freq_span, taper = 0.05)
       {
         tem = sig[ibeg[i]:iend[i]]
         tem = tem-mean(tem, na.rm=TRUE)
-        tem = cosine_taper(tem, taper = taper)
+        tem = spec.taper(tem, p = taper)
         tem =  c(tem,rep(0,krow-Ns))
         if(length(tem)<krow)
           {
@@ -210,7 +180,7 @@ instantaneous_frequency <- function(asig, tt, method = "arctan", lag = 1)
 }
     
 
-precision_tester <- function(tt = seq(0, 10, by = 0.01), a = 1, b = 1, c = 1, omega_1 = 2 * pi, omega_2 = 4 * pi, phi_1 = 0, phi_2 = pi/6, plot_signal = TRUE, plot_instfreq = TRUE, plot_error = TRUE, ...)
+precision_tester <- function(tt = seq(0, 10, by = 0.01), method = "arctan", lag = 1, a = 1, b = 1, c = 1, omega_1 = 2 * pi, omega_2 = 4 * pi, phi_1 = 0, phi_2 = pi/6, plot_signal = TRUE, plot_instfreq = TRUE, plot_error = TRUE, ...)
 {
     #This function computes the instantaeous frequency of a signal of the form
     # a sin(omega_1 t + phi_1) + b sin(omega_2 + phi_2) + c
@@ -228,6 +198,8 @@ precision_tester <- function(tt = seq(0, 10, by = 0.01), a = 1, b = 1, c = 1, om
 
     #INPUTS
     #    TT - sample times
+    #    METHOD - either "arctan" or "chain", see function "instantaneous_frequency"
+    #    LAG - Differentiation lag, see function "instantaneous frequency"
     #    A - Amplitude coefficient of first sinusoid
     #    B - Amplitude coefficient of second sinusoid
     #    C - Constant shift
@@ -264,7 +236,7 @@ precision_tester <- function(tt = seq(0, 10, by = 0.01), a = 1, b = 1, c = 1, om
 
     asig = hilbert_transform(sig)
 
-    numeric_instfreq = instantaneous_frequency(asig, tt)
+    numeric_instfreq = instantaneous_frequency(asig, tt, method = method, lag = lag)
 
     #PLOTTING 
 
