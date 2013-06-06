@@ -6,7 +6,7 @@ This function wraps the \code{emd} function in the \code{EMD} package.
 \code{sig2imf} is used in \code{\link{eemd}} and others.
 }
 \usage{
-emd_result <- sig2imf(sig, tt, spectral_method = "arctan", diff_lag = 1, stop_rule = "type5", tol = 5, boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_sift = 200, max_imf = 100, interm = NULL)
+sig2imf(sig, tt, spectral_method = "arctan", diff_lag = 1, stop_rule = "type5", tol = 5, boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_sift = 200, max_imf = 100, interm = NULL)
 }
 
 \arguments{

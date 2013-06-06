@@ -21,14 +21,14 @@ ftgram_image(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_span = NULL,
 \item{time_span}{Time span to render spectrogram over.  \code{NULL} will draw the spectrogram over the entire signal.}
 \item{freq_span}{Frequency span to render spectrogram over.  \code{NULL} plots everything up to the Nyquist frequency.}
 \item{amp_span}{Amplitude range to plot.  \code{NULL} plots everything.}
-\item{taper}{Taper value to use for spectrogram (default is 0.05), see \code{\link{cosine_taper}}.}
+\item{taper}{Taper value to use for spectrogram (default is 0.05), see \code{spec.taper} in the \code{base} package.}
 \item{scaling}{determines whether to apply logarithmic (log), or square root (sqrt) scaling to the amplitude data}
 \item{grid}{Boolean - whether to display grid lines or not}
 \item{colorbar}{Boolean - whether to display amplitude colorbar or not}
 \item{backcol}{What background color to use behind the spectrogram, in a 3 element vector: \code{c(red, green, blue)}}
 \item{colormap}{What palette object to use for the spectrogram, defaults to \code{rainbow(colorbins,start=0,end=5/6)}}
 \item{pretty}{Boolean - to choose nice axes values or to use exactly the ranges given}
-\item{This function supports some optional parameters as well:}
+\item{\dots}{This function supports some optional parameters as well:
 \itemize{
     \item{trace_format}{the format of the trace minima and maxima in sprintf format}
     \item{img_x_format}{the format of the X axis labels of the image in sprintf format}
@@ -39,7 +39,7 @@ ftgram_image(sig, dt, ft, time_span = NULL, freq_span = NULL, amp_span = NULL,
     \item{cex.trace}{the font size of the trace axis labels}
     \item{img_x_lab}{the X - axis label of the image, it defaults to "time"}
     \item{img_y_lab}{the Y - axis label of the image, it defaults to "frequency"}
-    \item{main}{Adds a title to the figure}}
+    \item{main}{Adds a title to the figure}}}
 }
 
 \details{
@@ -70,9 +70,8 @@ ft$nov=29
 time_span=c(5, 10)
 freq_span=c(0, 25)
 amp_span=c(1e-5, 0.0003)
-ftgram_image(sig, dt, ft, 
-    time_span = time_span, freq_span = freq_span, amp_span = amp_span, 
-    pretty = TRUE, img_x_format = "%.1f", img_y_format = "%.0f",
+ftgram_image(sig, dt, ft, time_span = time_span, freq_span = freq_span, amp_span = amp_span, 
+    pretty = TRUE, img_x_format = "\%.1f", img_y_format = "\%.0f",
     main = "Port Foster Event - Fourier Spectrogram")
 }
 

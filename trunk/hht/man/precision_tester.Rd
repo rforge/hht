@@ -5,10 +5,9 @@ Test numerically determined instantaneous frequency against exact instantaneous 
 }
 \description{
 This function compares the performance of \code{\link{instantaneous_frequency}} against signals of known instantaneous frequency.
-The known signal is of the form:
-\deqn{ x(t) = a\sin\{\omega_\{1\} + \varphi_\{1\}} + b\sin\{\omega_\{2\} + \varphi_\{2\}} + c}{a * sin(omega_1 + phi_1) + b * sin(omega_2 + phi_2) + c}
+The known signal is of the form
+\deqn{ x(t) = a\\sin\{\\omega_\{1\} + \\varphi_\{1\}\} + b\\sin\{\\omega_\{2\} + \\varphi_\{2\}\} + c} {a * sin(omega_1 + phi_1) + b * sin(omega_2 + phi_2) + c}
 One can create quite complicated signals by choosing the various amplitude, frequency, and phase constants.
-
 }
 \usage{
 precision_tester(tt = seq(0, 10, by = 0.01), method = "arctan", lag = 1, a = 1, b = 1, c = 1, omega_1 = 2 * pi, omega_2 = 4 * pi, phi_1 = 0, phi_2 = pi/6, plot_signal = TRUE, plot_instfreq = TRUE, plot_error = TRUE, ...)
@@ -58,7 +57,7 @@ Plotting parameters.
 }
 }
 \details{
-For a description of how the exact analytical frequency is derived, see \link{http://www.unc.edu/\%7Ehaksaeng/hht/analytic_instantaneous_freq.pdf}
+For a description of how the exact analytical frequency is derived, see \url{http://www.unc.edu/\%7Ehaksaeng/hht/analytic_instantaneous_freq.pdf}
 }
 \value{
 \item{instfreq$sig}{The time series}

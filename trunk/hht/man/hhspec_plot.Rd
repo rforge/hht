@@ -6,7 +6,8 @@ This function displays the Hilbert periodogram, with options to plot individual 
 }
 \usage{
 hhspec_plot(hspec, freq_span = NULL, scaling = "none", imf_list = NULL, 
-show_total = TRUE, show_fourier = FALSE, show_imfs = FALSE, legend = TRUE, ...)
+    show_total = TRUE, show_fourier = FALSE, scale_fourier = FALSE, 
+    show_imfs = FALSE, legend = TRUE, ...)
 }
 \arguments{
 \item{hspec}{Data structure returned by \code{\link{hh_spectrum}}}
@@ -18,7 +19,7 @@ show_total = TRUE, show_fourier = FALSE, show_imfs = FALSE, legend = TRUE, ...)
 \item{scale_fourier}{Scale Fourier and Hilbert spectra to each other for easier comparison}
 \item{show_imfs}{Plot individual IMF spectra}
 \item{legend}{Determines whether or not a legend is shown}
-\item{This function supports some optional parameters as well:}
+\item{\dots}{This function supports some optional parameters as well:
 \itemize{
     \item{xlab}{X axis label}
     \item{ylab}{Y axis label}
@@ -32,7 +33,7 @@ show_total = TRUE, show_fourier = FALSE, show_imfs = FALSE, legend = TRUE, ...)
     \item{fourier_col}{color of Fourier periodogram}
     \item{fourier_lwd}{lwd of Fourier periodogram}
     \item{fourier_lty}{lty of Fourier periodogram}
-    \item{main}{Adds a title to the figure}}
+    \item{main}{Adds a title to the figure}}}
 }
 
 \details{

@@ -7,16 +7,18 @@ Huang and Wu (2008) suggest another round of sifting to ensure that the averaged
 This function resifts the averaged IMF set and saves the results based on rules described in the input \code{resift_rule}.
 }
 \usage{
-eemd_resift(eemd_result, emd_config, resift_rule)  
+eemd_resift(eemd_result, resift_rule, spectral_method = "arctan", diff_lag = 1, 
+    tol = 5, max_sift = 200, stop_rule = "type5", boundary = "wave", sm = "none", 
+    smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL)  
 }
 \arguments{
 \item{eemd_result}{The averaged IMF set and individual Hilbert spectra of EMD trials generated through EEMD.}
-\item{resift_rule}{How the resifting algorithm chooses which IMF to save}
+\item{resift_rule}{How the resifting algorithm chooses which IMF to save
 \itemize{
     \item{Integer - Which IMF in the resifted set will be saved (so if resift_rule=1, the first IMF will be saved, the rest will be discarded)}
     \item{``last'' - The last IMF will be saved (not terribly useful)}
     \item{``max_var'' - The IMF with the most variance will be saved.  This will get the most ``significant'' IMF out of each resifted set.}
-    \item{``all'' - Every single new IMF generated from resifting the averaged IMFs will be saved.  There may be a lot of them!}}
+    \item{``all'' - Every single new IMF generated from resifting the averaged IMFs will be saved.  There may be a lot of them!}}}
 \item{spectral_method}{See \code{\link{sig2imf}}.}
 \item{diff_lag}{See \code{\link{sig2imf}}.}
 \item{tol}{See \code{\link{sig2imf}}.}

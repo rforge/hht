@@ -5,7 +5,7 @@
 This function performs ensemble empirical mode decomposition (EEMD).
 }
 \usage{
-eemd(sig, tt, noise_amp, trials, trials_dir <- NULL, verbose = TRUE, spectral_method <- "arctan", diff_lag <- 1, tol <- 5, max_sift <- 200, stop_rule <- "type5", boundary <- "wave", sm <- "none", smlevels <- c(1), spar <- NULL, max_imf <- 100, interm <- NULL)
+eemd(sig, tt, noise_amp, trials, nimf, trials_dir = NULL, verbose = TRUE, spectral_method = "arctan", diff_lag = 1, tol = 5, max_sift = 200, stop_rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL)
 }
 \arguments{
 \item{sig}{a time series to be decomposed (vector)}

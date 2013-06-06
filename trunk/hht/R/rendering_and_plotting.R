@@ -270,7 +270,7 @@ hh_spectrum <- function(hres, dfreq, freq_span = NULL, time_span = NULL, scaling
        amps[, i] = apply(hgram$z[, , i], 2, sum) 
    }
 
-  hspec = list(amplitude = amps, frequency = hgram$y, original_signal = hgram$original_signal, dt = dt, tt=tt, dfreq = dfreq)
+  hspec = list(amplitude = amps, frequency = hgram$y, original_signal = hgram$original_signal, dt = dt, tt=hres$tt, dfreq = dfreq)
   invisible(hspec)
 } 
 
@@ -458,7 +458,7 @@ hhgram_image <- function(hgram,time_span = NULL,freq_span = NULL, amp_span = NUL
         invisible(img)
 }
 
-hhspec_plot <- function(hspec, freq_span = NULL, scaling = "none", imf_list = NULL, show_total = TRUE, show_fourier = FALSE, show_imfs = FALSE, scale_fourier = FALSE, legend = TRUE, ...)
+hhspec_plot <- function(hspec, freq_span = NULL, scaling = "none", imf_list = NULL, show_total = TRUE, show_fourier = FALSE, scale_fourier = FALSE, show_imfs = FALSE, legend = TRUE, ...)
 {
     #Plot the Hilbert spectrum, optionally as individual IMFs, optionally with the scaled Fourier spectrum for comparison
     #INPUTS
@@ -487,7 +487,7 @@ hhspec_plot <- function(hspec, freq_span = NULL, scaling = "none", imf_list = NU
 
     if(!(show_total | show_imfs | show_fourier))
     {
-        error("Nothing to plot!  Set at least one of SHOW_TOTAL, SHOW_IMFS, or SHOW_FOURIER to TRUE.")
+        stop("Nothing to plot!  Set at least one of SHOW_TOTAL, SHOW_IMFS, or SHOW_FOURIER to TRUE.")
     }
 
     opts = list(...)

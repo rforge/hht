@@ -4,7 +4,7 @@
 Set up spectrogram figure
 }
 \description{
-Sets up the figure window for \code{\link{hhgram_image}} and \code{\link{ftgram_image}.
+Sets up the figure window for \code{\link{hhgram_image}} and \code{\link{ftgram_image}}.
 This is an internal function and will likely never be called by a user
 }
 
@@ -54,7 +54,6 @@ grid = TRUE, colorbar = TRUE, opts = list())
   \item{opts}{
   Other possible options passed from \code{\link{hhgram_image}} and \code{\link{ftgram_image}}}
   
-}
 }
 \value{
 INTERNAL

@@ -15,7 +15,7 @@ eemd_compile(trials_dir, trials, nimf)
 \details{
 The EEMD algorithm can generate hundreds of files, resulting in massive amounts of data.
 The \code{eemd_compile} function processes these files, generating an averaged IMF set and compiling the Hilbert spectrogram of each EMD run.
-The output of \code{eemd_compile} can be used in \code{\link{plot_imfs}} and \code{\link{hhspec_image}}.
+The output of \code{eemd_compile} can be used in \code{\link{plot_imfs}} and \code{\link{hhgram_image}}.
 The averaged IMF set from \code{eemd_compile} can be resifted using \code{\link{eemd_resift}}. 
 }
 \value{ 
