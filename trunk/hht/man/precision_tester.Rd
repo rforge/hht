@@ -6,11 +6,14 @@ Test numerically determined instantaneous frequency against exact instantaneous 
 \description{
 This function compares the performance of \code{\link{instantaneous_frequency}} against signals of known instantaneous frequency.
 The known signal is of the form
-\deqn{ x(t) = a\\sin\{\\omega_\{1\} + \\varphi_\{1\}\} + b\\sin\{\\omega_\{2\} + \\varphi_\{2\}\} + c} {a * sin(omega_1 + phi_1) + b * sin(omega_2 + phi_2) + c}
+\deqn{ x(t) = a\sin(\omega_{1} + \varphi_{1}) + b\sin(\omega_{2} + \varphi_{2}) + c}{a * \sin(omega_1 + phi_1) + b * sin(omega_2 + phi_2) + c}
 One can create quite complicated signals by choosing the various amplitude, frequency, and phase constants.
 }
 \usage{
-precision_tester(tt = seq(0, 10, by = 0.01), method = "arctan", lag = 1, a = 1, b = 1, c = 1, omega_1 = 2 * pi, omega_2 = 4 * pi, phi_1 = 0, phi_2 = pi/6, plot_signal = TRUE, plot_instfreq = TRUE, plot_error = TRUE, ...)
+precision_tester(tt = seq(0, 10, by = 0.01), method = "arctan", lag = 1, 
+    a = 1, b = 1, c = 1, omega_1 = 2 * pi, omega_2 = 4 * pi, 
+    phi_1 = 0, phi_2 = pi/6, plot_signal = TRUE, 
+    plot_instfreq = TRUE, plot_error = TRUE, ...)
 }
 \arguments{
   \item{tt}{
@@ -71,53 +74,59 @@ Daniel C. Bowman \email{daniel.bowman@unc.edu}
 \examples{
 
 #Simple signal
-tt = seq(0, 10, by = 0.01)
-a = 1
-b = 0
-c = 0
-omega_1 = 30 * pi
-omega_2 = 0
-phi_1 = 0
-phi_2 = 0
-precision_tester(tt, method = "arctan", lag = 1, a, b, c, omega_1, omega_2, phi_1, phi_2)
+tt <- seq(0, 10, by = 0.01)
+a <- 1
+b <- 0
+c <- 0
+omega_1 <- 30 * pi
+omega_2 <- 0
+phi_1 <- 0
+phi_2 <- 0
+precision_tester(tt, method = "arctan", lag = 1, a, b, c, 
+    omega_1, omega_2, phi_1, phi_2)
 
 #That was nice - what happens if we use the "chain" method...?
 
-precision_tester(tt, method = "chain", lag = 1, a, b, c, omega_1, omega_2, phi_1, phi_2)
+precision_tester(tt, method = "chain", lag = 1, a, b, c, 
+    omega_1, omega_2, phi_1, phi_2)
 
 #Big problems!  Let's increase the sample rate
 
-tt = seq(0, 10, by = 0.0005)
-precision_tester(tt, method = "chain", lag = 1, a, b, c, omega_1, omega_2, phi_1, phi_2)
+tt <- seq(0, 10, by = 0.0005)
+precision_tester(tt, method = "chain", lag = 1, a, b, c, 
+omega_1, omega_2, phi_1, phi_2)
+
 #That's better
 
 #Frequency modulations caused by signal that is not symmetric about 0
 
-tt = seq(0, 10, by = 0.01)
-a = 1
-b = 0
-c = 0.25
-omega_1 = 2 * pi
-omega_2 = 0
-phi_1 = 0
-phi_2 = 0
+tt <- seq(0, 10, by = 0.01)
+a <- 1
+b <- 0
+c <- 0.25
+omega_1 <- 2 * pi
+omega_2 <- 0
+phi_1 <- 0
+phi_2 <- 0
 
-precision_tester(tt, method = "arctan", lag = 1, a, b, c, omega_1, omega_2, phi_1, phi_2)
+precision_tester(tt, method = "arctan", lag = 1, a, b, c, 
+omega_1, omega_2, phi_1, phi_2)
 
 #Non-uniform sample rate
 set.seed(628)
-tt = sort(runif(500, 0, 10))
-a = 1
-b = 0
-c = 0
-omega_1 = 2 * pi
-omega_2 = 0
-phi_1 = 0
-phi_2 = 0
+tt <- sort(runif(500, 0, 10))
+a <- 1
+b <- 0
+c <- 0
+omega_1 <- 2 * pi
+omega_2 <- 0
+phi_1 <- 0
+phi_2 <- 0
 
-precision_tester(tt, method = "arctan", lag = 1, a, b, c, omega_1, omega_2, phi_1, phi_2)
+precision_tester(tt, method = "arctan", lag = 1, a, b, c, 
+omega_1, omega_2, phi_1, phi_2)
 }
 
 \seealso{\code{\link{instantaneous_frequency}}}
 
-\keyword{nonparametric}
+\keyword{ts}

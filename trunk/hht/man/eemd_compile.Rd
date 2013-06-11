@@ -10,7 +10,7 @@ eemd_compile(trials_dir, trials, nimf)
 \arguments{
 \item{trials_dir}{Directory where previously generated EEMD trial files are stored.}
 \item{trials}{Number of trial files to read.  This will warn users if the number of requested trials is greater than the number of files in the directory.}
-\item{nimf}{Number of IMFs to record, IMFs past this number will not be saved.}
+\item{nimf}{Number of IMFs per EMD run. IMFs past this number will not be saved.}
 }
 \details{
 The EEMD algorithm can generate hundreds of files, resulting in massive amounts of data.
@@ -25,27 +25,27 @@ The averaged IMF set from \code{eemd_compile} can be resifted using \code{\link{
 \author{Daniel Bowman \email{daniel.bowman@unc.edu}}
 
 \seealso{
-\code{\link{eemd}},\code{\link{combine_trials}}
+\code{\link{eemd}}, \code{\link{combine_trials}}
 }
 \examples{
 data(port_foster_event)
-trials<-10
-nimf<-10
-noise_amp<-6.4e-07
-trials_dir<-"test"
+trials <- 10
+nimf <- 10
+noise_amp <- 6.4e-07
+trials_dir <- "test"
 
 set.seed(628)
 #Run EEMD (this may take some time)
 \dontrun{eemd(sig, tt, noise_amp, trials, nimf, trials_dir = trials_dir)}
 
 #Compile the results
-\dontrun{eemd_result<-eemd_compile(trials_dir, trials, nimf)}
+\dontrun{eemd_result <- eemd_compile(trials_dir, trials, nimf)}
 
 #Plot the IMFs
-time_span<-c(5, 10)
-imf_list<-1:3
-os<-TRUE
-res<-TRUE
+time_span <- c(5, 10)
+imf_list <- 1:3
+os <- TRUE
+res <- TRUE
 \dontrun{plot_imfs(eemd_result, time_span, imf_list, os, res)}
 }
-\keyword{nonparametric}
+\keyword{ts}

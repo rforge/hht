@@ -19,9 +19,9 @@ evolutive_fft(sig, dt, ft, freq_span, taper = 0.05)
   \item{ft}{
   Fourier transform input parameters
   \itemize{
-      \item{ft$nfft}{The frequency resolution, should be in powers of 2}
-      \item{ft$ns}{Number of samples in a window}
-      \item{ft$nov}{Number of samples to overlap, must be less than \code{ft$ns}}}
+      \item{ft$nfft}{  The frequency resolution, should be in powers of 2}
+      \item{ft$ns}{  Number of samples in a window}
+      \item{ft$nov}{  Number of samples to overlap, must be less than \code{ft$ns}}}
 }
   \item{freq_span}{
   Frequency range to return.
@@ -51,4 +51,4 @@ Daniel C. Bowman \email{daniel.bowman@unc.edu}, Jonathan M. Lees
 This is a modification of the \code{evolfft} function in the \code{RSEIS} package.
 }
 
-\keyword{nonparametric}
+\keyword{ts}

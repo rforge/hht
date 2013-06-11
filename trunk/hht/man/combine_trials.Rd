@@ -1,6 +1,6 @@
 \name{combine_trials}
 \alias{combine_trials}
-\title{Gather trial files}
+\title{Gather EEMD trial files}
 \description{
 This function gathers trial files from multiple directories, renumbers them, and saves them to a single directory for processing using \code{\link{eemd_compile}}.
 }
@@ -10,7 +10,7 @@ combine_trials(in_dirs, out_dir, copy=TRUE)
 \arguments{
 \item{in_dirs}{Directories containing trial file sets from one EEMD run.}
 \item{out_dir}{Directory in which to save all trial files.}
-\item{copy}{Copy files (copy=TRUE) or move them (copy=FALSE).}
+\item{copy}{Copy files (\code{TRUE}) or move them (\code{FALSE}).}
 }
 \details{
 Parallel processing is an efficient method for running EEMD.
@@ -28,10 +28,12 @@ The trial files are saved in the directory specified by \code{out_dir}.
 \code{\link{eemd}}, \code{\link{eemd_compile}}
 }
 \examples{
-#Suppose you have run 3 different EEMD sets of 100 trials each and saved the results in eemd1, eemd2, eemd3, respectively:
+#Suppose you have run 3 different EEMD sets of 100 trials each 
+#and saved the results in eemd1, eemd2, eemd3, respectively:
 in_dirs <- c("/home/user/eemd1", "/home/user/eemd2/", "/home/user/eemd3")
 out_dir <- "/home/user/all_trials"
 \dontrun{combine_trials(in_dirs, out_dir)}
-#Now all your trials should be located in /home/user/all_trials, numbered 1 through 300
+#Now all your trials should be located in /home/user/all_trials, 
+#numbered 1 through 300
 }
-\keyword{nonparametric}
+\keyword{ts}

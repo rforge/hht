@@ -28,14 +28,15 @@ Daniel C. Bowman \email{daniel.bowman@unc.edu}
 \code{\link{hilbert_envelope}}, \code{\link{instantaneous_frequency}}
 }
 \examples{
-tt = seq(1000) * 0.01
-sig = sin(pi * tt)
-asig = hilbert_transform(sig)
+tt <- seq(1000) * 0.01
+sig <- sin(pi * tt)
+asig <- hilbert_transform(sig)
 plot(tt, sig, xlim = c(0, 12))
 lines(tt, Re(asig), col = "green")
 lines(tt, Im(asig), col = "red")
-legend("topright", col = c("black", "red", "green"), 
-lty = c(NA, 1, 1), pch = c(1, NA, NA), legend = c("Signal", "Real", "Imaginary"))
+legend("topright", col = c("black", "green", "red"), 
+lty = c(NA, 1, 1), pch = c(1, NA, NA), 
+legend = c("Signal", "Real", "Imaginary"))
 
 }
-\keyword{nonparametric}
+\keyword{ts}

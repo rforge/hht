@@ -45,4 +45,4 @@ When in doubt, use the \code{\link{precision_tester}} function to check your res
 \seealso{
 \code{\link{precision_tester}}
 }
-\keyword{nonparametric}
+\keyword{ts}

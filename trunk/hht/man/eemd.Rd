@@ -5,7 +5,10 @@
 This function performs ensemble empirical mode decomposition (EEMD).
 }
 \usage{
-eemd(sig, tt, noise_amp, trials, nimf, trials_dir = NULL, verbose = TRUE, spectral_method = "arctan", diff_lag = 1, tol = 5, max_sift = 200, stop_rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL)
+eemd(sig, tt, noise_amp, trials, nimf, trials_dir = NULL, verbose = TRUE, 
+    spectral_method = "arctan", diff_lag = 1, tol = 5, max_sift = 200,
+    stop_rule = "type5", boundary = "wave", sm = "none",
+    smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL)
 }
 \arguments{
 \item{sig}{a time series to be decomposed (vector)}
@@ -39,7 +42,7 @@ The trial files in this directory can then be processed using \code{\link{eemd_c
 Keep in mind that the EEMD is an expensive algorithm and may take significant time to run.
 }
 \value{ 
-\item{emd_result}{The result of each individual EMD trial. This is saved directly to file in directory \code{trials_dir} (i.e. it is not returned by \code{eemd}.)}
+\item{emd_result}{The result of each individual EMD trial. This is saved directly to files in directory \code{trials_dir} (i.e. it is not returned by \code{eemd}.)}
 }
 \references{
 Wu, Z. A. and Huang, N. E. (2009) Ensemble empirical mode decomposition: {A} noise assisted data analysis method.
@@ -53,23 +56,23 @@ Wu, Z. A. and Huang, N. E. (2009) Ensemble empirical mode decomposition: {A} noi
 }
 \examples{
 data(port_foster_event)
-trials<-10
-nimf<-10
-noise_amp<-6.4e-07
-trials_dir<-"test"
+trials <- 10
+nimf <- 10
+noise_amp <- 6.4e-07
+trials_dir <- "test"
 
 set.seed(628)
 #Run EEMD (this may take some time)
 \dontrun{eemd(sig, tt, noise_amp, trials, nimf, trials_dir = trials_dir)}
 
 #Compile the results
-\dontrun{eemd_result<-eemd_compile(trials_dir, trials, nimf)}
+\dontrun{eemd_result <- eemd_compile(trials_dir, trials, nimf)}
 
 #Plot the IMFs
-time_span<-c(5, 10)
-imf_list<-1:3
-os<-TRUE
-res<-TRUE
+time_span <- c(5, 10)
+imf_list <- 1:3
+os <- TRUE
+res <- TRUE
 \dontrun{plot_imfs(eemd_result, time_span, imf_list, os, res)}
 }
-\keyword{nonparametric}
+\keyword{ts}

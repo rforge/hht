@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=latex 2012.11.8)  22 JAN 2013 15:50
+This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2012.11.8)  11 JUN 2013 15:02
 entering extended mode
  %&-line parsing enabled.
 **interesting_signals.tex
@@ -64,10 +64,11 @@ Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
 (/usr/share/texmf/tex/latex/config/graphics.cfg
 File: graphics.cfg 2007/01/18 v1.5 graphics configuration of teTeX/TeXLive
 )
-Package graphics Info: Driver file: dvips.def on input line 90.
+Package graphics Info: Driver file: pdftex.def on input line 90.
 
-(/usr/share/texmf/tex/latex/graphics/dvips.def
-File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+(/usr/share/texmf/tex/latex/pdftex-def/pdftex.def
+File: pdftex.def 2007/01/08 v0.04d Graphics/color for pdfTeX
+\Gread@gobject=\count88
 ))
 \Gin@req@height=\dimen103
 \Gin@req@width=\dimen104
@@ -76,11 +77,11 @@ File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
 Package: fancyvrb 1998/07/17
 
 Style option: `fancyvrb' v2.6, with DG/SPQR fixes <1998/07/17> (tvz)
-\FV@CodeLineNo=\count88
+\FV@CodeLineNo=\count89
 \FV@InFile=\read1
 \FV@TabBox=\box26
-\c@FancyVerbLine=\count89
-\FV@StepNumber=\count90
+\c@FancyVerbLine=\count90
+\FV@StepNumber=\count91
 \FV@OutFile=\write3
 
 No file fancyvrb.cfg.
@@ -176,219 +177,116 @@ LaTeX Font Info:    Try loading font information for T1+aer on input line 100.
 
 (/usr/share/texmf/tex/latex/ae/t1aer.fd
 File: t1aer.fd 1997/11/16 Font definitions for T1/aer.
-))))
-No file interesting_signals.aux.
+)))) (./interesting_signals.aux)
 \openout1 = `interesting_signals.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 6.
-LaTeX Font Info:    Try loading font information for TS1+cmr on input line 6.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 5.
+LaTeX Font Info:    ... okay on input line 5.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 5.
+LaTeX Font Info:    ... okay on input line 5.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 5.
+LaTeX Font Info:    ... okay on input line 5.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 5.
+LaTeX Font Info:    ... okay on input line 5.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 5.
+LaTeX Font Info:    ... okay on input line 5.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 5.
+LaTeX Font Info:    ... okay on input line 5.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 5.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 5.
+
 (/usr/share/texmf/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 6.
+LaTeX Font Info:    ... okay on input line 5.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <14.4> on input line 11.
+(Font)              <14.4> on input line 10.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 11.
-
-No file interesting_signals.toc.
+(Font)              <7> on input line 10.
+ (./interesting_signals.toc
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 2.
+)
 \tf@toc=\write4
 \openout4 = `interesting_signals.toc'.
 
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 24.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 24.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 24.
-
-LaTeX Warning: Reference `fig:stacked1imfs' on page 1 undefined on input line 3
-0.
-
-
-LaTeX Warning: Reference `fig:stacked1farhspec' on page 1 undefined on input li
-ne 32.
-
-
-LaTeX Warning: Reference `eqn:stacked1' on page 1 undefined on input line 33.
-
-
-LaTeX Warning: Reference `eqn:stacked1' on page 1 undefined on input line 34.
-
-
-LaTeX Warning: Reference `fig:stacked1ft' on page 1 undefined on input line 37.
-
-
-
-LaTeX Warning: Reference `eqn:stacked1' on page 1 undefined on input line 40.
 
 [1
 
-]
-LaTeX Font Info:    Try loading font information for T1+aett on input line 50.
- (/usr/share/texmf/tex/latex/ae/t1aett.fd
+{/usr/share/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+LaTeX Font Info:    Try loading font information for T1+aett on input line 49.
+
+(/usr/share/texmf/tex/latex/ae/t1aett.fd
 File: t1aett.fd 1997/11/16 Font definitions for T1/aett.
 ) [2]
+<interesting_signals-stacked1imfs.pdf, id=13, 433.62pt x 433.62pt>
+File: interesting_signals-stacked1imfs.pdf Graphic file (type pdf)
 
-! LaTeX Error: Cannot determine size of graphic in stacked1imfs.png (no Boundin
-gBox).
+<use interesting_signals-stacked1imfs.pdf> [3]
+<interesting_signals-stacked1farhgram.pdf, id=18, 433.62pt x 433.62pt>
+File: interesting_signals-stacked1farhgram.pdf Graphic file (type pdf)
 
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.120 ...hics[width=1\textwidth]{stacked1imfs.png}
-                                                  
-? 
-File: stacked1imfs.png Graphic file (type eps)
-<stacked1imfs.png>
+<use interesting_signals-stacked1farhgram.pdf>
+<interesting_signals-stacked1ft.pdf, id=19, 433.62pt x 433.62pt>
+File: interesting_signals-stacked1ft.pdf Graphic file (type pdf)
 
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[3] [4] [5]
-
-LaTeX Warning: Reference `fig:stacked2imf' on page 6 undefined on input line 15
-7.
-
-
-LaTeX Warning: Reference `fig:stacked2ht' on page 6 undefined on input line 158
-.
-
-
-LaTeX Warning: Reference `fig:stacked2ft' on page 6 undefined on input line 159
-.
-
-
-LaTeX Warning: Reference `eqn:stacked2' on page 6 undefined on input line 160.
-
-[6
+<use interesting_signals-stacked1ft.pdf> [4] [5 <./interesting_signals-stacked1
+imfs.pdf>] [6 <./interesting_signals-stacked1farhgram.pdf>] [7 <./interesting_s
+ignals-stacked1ft.pdf>] [8
 
 ]
+<interesting_signals-stacked2imf.pdf, id=51, 433.62pt x 433.62pt>
+File: interesting_signals-stacked2imf.pdf Graphic file (type pdf)
 
-LaTeX Warning: Reference `eqn:stacked2' on page 7 undefined on input line 238.
+<use interesting_signals-stacked2imf.pdf>
+<interesting_signals-stacked2ht.pdf, id=52, 433.62pt x 433.62pt>
+File: interesting_signals-stacked2ht.pdf Graphic file (type pdf)
 
+<use interesting_signals-stacked2ht.pdf>
+<interesting_signals-stacked2ft.pdf, id=53, 433.62pt x 433.62pt>
+File: interesting_signals-stacked2ft.pdf Graphic file (type pdf)
 
-LaTeX Warning: Reference `eqn:stacked2' on page 7 undefined on input line 238.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-LaTeX Warning: Reference `eqn:stacked2' on page 7 undefined on input line 246.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-LaTeX Warning: Reference `eqn:stacked2' on page 7 undefined on input line 254.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[7] [8]
-
-LaTeX Warning: Reference `fig:nonlinstaimfs' on page 9 undefined on input line 
-271.
-
-
-LaTeX Warning: Reference `fig:nonlinstaht' on page 9 undefined on input line 27
-3.
-
-
-LaTeX Warning: Reference `eqn:nonlinsta' on page 9 undefined on input line 274.
-
-
-
-LaTeX Warning: Reference `fig:nonlinstaft' on page 9 undefined on input line 27
-4.
-
-
-LaTeX Warning: Reference `fig:nonlinstaimfs' on page 9 undefined on input line 
-277.
-
-[9
+<use interesting_signals-stacked2ft.pdf> [9] [10 <./interesting_signals-stacked
+2imf.pdf>] [11 <./interesting_signals-stacked2ht.pdf>] [12 <./interesting_signa
+ls-stacked2ft.pdf>] [13
 
 ]
+<interesting_signals-nonlinstaimfs.pdf, id=88, 433.62pt x 433.62pt>
+File: interesting_signals-nonlinstaimfs.pdf Graphic file (type pdf)
 
-! LaTeX Error: File `interesting_signals-nonlinstaimfs' not found.
+<use interesting_signals-nonlinstaimfs.pdf> [14]
+<interesting_signals-nonlinstaht.pdf, id=92, 433.62pt x 433.62pt>
+File: interesting_signals-nonlinstaht.pdf Graphic file (type pdf)
 
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.362 ...aphics{interesting_signals-nonlinstaimfs}
-                                                  
-? 
+<use interesting_signals-nonlinstaht.pdf>
+<interesting_signals-nonlinstaft.pdf, id=93, 433.62pt x 433.62pt>
+File: interesting_signals-nonlinstaft.pdf Graphic file (type pdf)
 
-LaTeX Warning: Reference `eqn:nonlinsta' on page 10 undefined on input line 365
-.
-
-
-LaTeX Warning: Reference `eqn:nonlinsta' on page 10 undefined on input line 365
-.
-
-[10]
-
-! LaTeX Error: File `interesting_signals-nonlinstaht' not found.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.371 ...graphics{interesting_signals-nonlinstaht}
-                                                  
-? 
-
-LaTeX Warning: Reference `eqn:nonlinsta' on page 11 undefined on input line 373
-.
-
-
-! LaTeX Error: File `interesting_signals-nonlinstaft' not found.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.384 ...graphics{interesting_signals-nonlinstaft}
-                                                  
-? 
-
-LaTeX Warning: Reference `eqn:nonlinsta' on page 11 undefined on input line 386
-.
-
-[11] (./interesting_signals.aux)
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
- ) 
+<use interesting_signals-nonlinstaft.pdf> [15] [16 <./interesting_signals-nonli
+nstaimfs.pdf>] [17 <./interesting_signals-nonlinstaht.pdf>] [18 <./interesting_
+signals-nonlinstaft.pdf>] (./interesting_signals.aux) ) 
 Here is how much of TeX's memory you used:
- 2021 strings out of 256217
- 26823 string characters out of 1917095
- 73438 words of memory out of 1500000
- 5295 multiletter control sequences out of 10000+200000
- 19221 words of font info for 36 fonts, out of 1200000 for 2000
+ 2126 strings out of 256216
+ 29080 string characters out of 1917072
+ 76071 words of memory out of 1500000
+ 5370 multiletter control sequences out of 10000+200000
+ 28000 words of font info for 64 fonts, out of 1200000 for 2000
  645 hyphenation exceptions out of 8191
- 35i,6n,21p,930b,302s stack positions out of 5000i,500n,6000p,200000b,15000s
+ 35i,6n,21p,370b,289s stack positions out of 5000i,500n,6000p,200000b,15000s
+</usr/share/texmf/fonts/
+type1/bluesky/cm/cmbx12.pfb></usr/share/texmf/fonts/type1/bluesky/cm/cmmi12.pfb
+></usr/share/texmf/fonts/type1/bluesky/cm/cmmi6.pfb></usr/share/texmf/fonts/typ
+e1/bluesky/cm/cmr12.pfb></usr/share/texmf/fonts/type1/bluesky/cm/cmr17.pfb></us
+r/share/texmf/fonts/type1/bluesky/cm/cmr6.pfb></usr/share/texmf/fonts/type1/blu
+esky/cm/cmsltt10.pfb></usr/share/texmf/fonts/type1/bluesky/cm/cmsy6.pfb></usr/s
+hare/texmf/fonts/type1/bluesky/cm/cmtt12.pfb>
+Output written on interesting_signals.pdf (18 pages, 1194910 bytes).
+PDF statistics:
+ 150 PDF objects out of 1000 (max. 8388607)
+ 0 named destinations out of 1000 (max. 131072)
+ 46 words of extra memory for PDF output out of 10000 (max. 10000000)
 
-Output written on interesting_signals.dvi (11 pages, 14840 bytes).

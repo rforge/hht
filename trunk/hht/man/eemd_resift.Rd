@@ -7,9 +7,10 @@ Huang and Wu (2008) suggest another round of sifting to ensure that the averaged
 This function resifts the averaged IMF set and saves the results based on rules described in the input \code{resift_rule}.
 }
 \usage{
-eemd_resift(eemd_result, resift_rule, spectral_method = "arctan", diff_lag = 1, 
-    tol = 5, max_sift = 200, stop_rule = "type5", boundary = "wave", sm = "none", 
-    smlevels = c(1), spar = NULL, max_imf = 100, interm = NULL)  
+eemd_resift(eemd_result, resift_rule, spectral_method = "arctan", 
+    diff_lag = 1, tol = 5, max_sift = 200, stop_rule = "type5", 
+    boundary = "wave", sm = "none", smlevels = c(1), 
+    spar = NULL, max_imf = 100, interm = NULL)  
 }
 \arguments{
 \item{eemd_result}{The averaged IMF set and individual Hilbert spectra of EMD trials generated through EEMD.}
@@ -64,11 +65,11 @@ set.seed(628)
 \dontrun{eemd(sig, tt, noise_amp, trials, nimf, noise_amp, trials_dir = trials_dir)}
 
 #Compile the results
-\dontrun{eemd_result=eemd_compile(trials_dir, trials, nimf)}
+\dontrun{eemd_result <- eemd_compile(trials_dir, trials, nimf)}
 
 
 resift_rule="max_var"
-\dontrun{resift_result=eemd_resift(eemd_result, resift_rule)}
+\dontrun{resift_result <- eemd_resift(eemd_result, resift_rule)}
 
 #Plot the IMFs
 time_span=c(5, 10)
@@ -77,4 +78,4 @@ os=TRUE
 res=TRUE
 \dontrun{plot_imfs(resift_result, time_span, imf_list, os, res)}
 }
-\keyword{nonparametric}
+\keyword{ts}

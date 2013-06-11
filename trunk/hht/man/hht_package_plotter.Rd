@@ -61,4 +61,4 @@ INTERNAL
 \author{
 Daniel Bowman \email{daniel.bowman@unc.edu}
 }
-\keyword{nonparametric}
+\keyword{hplot}
