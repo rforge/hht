@@ -292,11 +292,11 @@ Adjusting Time and Frequency limits to nice looking numbers (the "pretty" option
 \section{Nonlinear and Nonstationary Signal}
 While the Fourier spectrogram is essentially equivalent to or superior to the Hilbert spectrogram for linear and stationary signals,
 the true power of the HHT emerges when the signals are neither linear nor stationary.
-Here, we investigate a frequency modulated wave with a normal taper combined with high and low frequency sinusoidal waves:
+Here, we investigate a frequency modulated wave combined with a low frequency sinusoidal wave with increasing frequency over time:
 
 \begin{equation}
 \label{eqn:nonlinsta}
-x (t) = \sin(2\pi t+0.5\sin(\frac{\pi}{4} t))e^{\frac{-(t-100)^{2}}{750}} + \sin(\frac{\pi}{10} t)e^{\frac{-(t-100)^{2}}{500}}
+x (t) = \sin(2\pi t+0.5\sin(\frac{\pi}{4} t))e^{\frac{-(t-100)^{2}}{750}} + \sin(\frac{\pi}{500} t^{2})e^{\frac{-(t-100)^{2}}{500}}
 \end{equation}
 
 The EMD successfully separates the components of the signal (Fig. \ref{fig:nonlinstaimfs}).
@@ -316,8 +316,8 @@ This issue is addressed in the vignette ``Improving the Performance of the HHT u
 > library(hht)
 > dt=0.01
 > tt = seq(dt, 200, by = dt)
-> sig=sin(2*pi*tt+0.5*sin(pi*tt/4))*exp(-(tt-100)^2/750)+
-+     sin(pi*tt/10)*exp(-(tt-100)^2/500)
+> sig=sin(2*pi*tt+0.5*sin(pi*tt/4))*exp(-(tt-100)^2/750) + 
++     sin(pi*(tt^2)/500)*exp(-(tt-100)^2/500)
 > max_sift=200
 > max_imf=100
 > tol=5
@@ -345,12 +345,6 @@ This issue is addressed in the vignette ``Improving the Performance of the HHT u
 > dfreq = 0.01
 > hgram=hh_render(emd_result, sdt, dfreq, 
 +     freq_span = freq_span, verbose = FALSE)
-> 
-\end{Sinput}
-\end{Schunk}
-
-\begin{Schunk}
-\begin{Sinput}
 > time_span=c(40, 160)
 > freq_span=c(0, 2)
 > amp_span=c(0.1, 1)

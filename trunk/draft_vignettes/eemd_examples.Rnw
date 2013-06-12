@@ -27,7 +27,7 @@ The third signal is a transient event recorded at Deception Island volcano, Anta
 I show how the EEMD can extract meaningful information from a signal previously thought to be too short for spectral analysis.
 I also demonstrate the higher time frequency resolution of the Hilbert spectrogram as opposed to the Fourier spectrogram.
 
-\textbf{WARNING:  The EEMD code in this vignette can take a very long time to run (minutes to hours).}
+\textbf{WARNING:  The EEMD code in this vignette takes several hours to run.}
 
 \section{Eliminating Spline Fitting Problems}
 
@@ -48,8 +48,8 @@ Mode mixing can cause aliasing in the Hilbert transform because it disturbs loca
 
 Each trial of the EEMD method adds a different white noise set to the signal and performs EMD. 
 If this is done enough times, the averaged IMF set from all the trials approaches the ``true'' signal .
-After EEMD, the spline fitting has been improved and mode mixing has been reduced (Fig. \ref{fig:nonlinstasift}).
-The higher frequency signal is still present on several IMFs, but the signal less intermittent than it was in the noisy EMD trial (Fig. \ref{fig:nonlinstarand}).
+After EEMD, the spline fitting has been improved.
+Although the higher frequency signal remains on two IMFs (Fig. \ref{fig:nonlinstasift}), the two averaged modes are smoother compared to the signal with only one EMD run (Fig. \ref{fig:nonlinstarand}).
 
 \subsection{Code}
 
@@ -76,8 +76,7 @@ plot_imfs(emd_result)
 \textbf{Perform EEMD}
 
 <<>>=
-#trials=100
-trials = 2 #Test
+trials=100
 nimf=11
 noise_amp=0.01
 trials_dir="example_1"
@@ -159,12 +158,9 @@ However, the presence of noise creates many more IMFs and also causes severe mod
 The most obvious mode mixing occurs where portions of the high frequency sinusoid switch back and forth between IMF 2 and IMF 3.
 IMF 4 and IMF 5 both contain portions of the lower frequency, creating severe distortion in that signal band as well (Fig. \ref{fig:modemix}).
 
-The Hilbert spectrogram of this time series should show strong continuous frequency bands at 0.5 Hz and 6 Hz.
+The Hilbert spectrogram of this time series should show strong continuous frequency bands at 1 Hz and 6 Hz.
 However, the mode mixing produces a chaotic spectrogram with an intermittent low frequency signal around 0.5 Hz and a scattered high frequency signal between 4 and 8 Hz (Fig. \ref{fig:modemixht}).
-
 After a 100 trial EEMD run, the averaged IMF set looks better than the original EMD (Fig. \ref{fig:stackedeemdimfs}).
-While IMF 2 still has evidence of mode mixing, IMF 3 is more continuous than it was before.
-IMF 5 is much improved compared to the original IMF set.
 
 The EEMD Hilbert spectrogram is a marked improvement over the original Hilbert spectrogram (Fig. \ref{fig:stackedeemdht}).
 There are two continuous bands of energy that correspond with the sinusoids in Equation \ref{eqn:modemix}.
@@ -177,8 +173,7 @@ While the 6 Hz band is still noisy, it is less scattered than in the original sp
 library(hht)
 set.seed(628)
 dt=0.01
-#tt=seq_len(2000)*dt
-tt = seq_len(200)*dt #For testing
+tt=seq_len(2000)*dt
 sig=sin(2*pi*tt) + 2*sin(12*pi*tt)+rnorm(length(tt), 0, 0.4)
 emd_result=sig2imf(sig, tt)
 plot_imfs(emd_result)
@@ -187,19 +182,22 @@ plot_imfs(emd_result)
 
 \textbf{Hilbert spectrogram of noisy signal}
 <<label=modemixhtcode, include=FALSE>>=
-dfreq = 0.1
-hgram=hh_render(emd_result, dt, dfreq, verbose = FALSE)
+dfreq = 0.05
+freq_span = c(0, 10)
+hgram=hh_render(emd_result, dt, dfreq, freq_span = freq_span, 
+    verbose = FALSE)
 time_span=c(0, 20)
 freq_span=c(0, 10)
 amp_span=c(0.75, 3)
-hhgram_image(hgram, time_span, freq_span, amp_span)
+hhgram_image(hgram, time_span = time_span, freq_span = freq_span,
+    amp_span = amp_span, pretty = TRUE,
+    img_y_format = "%.0f", img_x_format = "%.0f")
 @
 
 \textbf{Run EEMD}
 
 <<>>=
-#trials=100
-trials = 2 #For testing
+trials=100
 nimf=9
 noise_amp=0.4
 trials_dir="example_2"
@@ -214,15 +212,8 @@ eemd_result=eemd_compile(trials_dir, trials, nimf)
 
 <<label=stackedeemdimfscode, include=FALSE>>=
 
-trials=100
-nimf=9
-trials_dir="example_2"
-eemd_result=eemd_compile(trials_dir, trials, nimf)
-
-resift_rule="max_var"
-resift_result=eemd_resift(eemd_result, resift_rule = resift_rule)
-
-plot_imfs(resift_result)
+plot_imfs(eemd_result, imf_list = c(2, 3, 5),
+    res = FALSE, fit_line = TRUE)
 @
 
 \textbf{Render and plot EEMD Hilbert spectrogram}
@@ -230,17 +221,17 @@ plot_imfs(resift_result)
 <<label=stackedeemdhtcode, include=FALSE>>=
 
 freq_span=c(0, 10)
-dfreq=0.1
+dfreq=0.05
 hgram=hh_render(eemd_result, dt, dfreq, 
     freq_span = freq_span, verbose = FALSE)
 
 time_span=c(0, 20)
 freq_span=c(0, 10)
 amp_span=c(0.75, 3)
-#cluster_span=c(8, 100)
-cluster_span = c(0, 100) #For testing
+cluster_span=c(5, 100)
 hhgram_image(hgram, time_span = time_span, freq_span = freq_span, 
-    amp_span = amp_span, cluster_span = cluster_span)
+    amp_span = amp_span, cluster_span = cluster_span, pretty = TRUE,
+    img_y_format = "%.0f", img_x_format = "%.0f")
 @ 
 
 \subsection{Figures}
@@ -273,7 +264,8 @@ hhgram_image(hgram, time_span = time_span, freq_span = freq_span,
 <<stackedeemdimfscode>>
 @
 \end{center}
-\caption{Averaged IMF set generated from EEMD of signal in Equation \ref{eqn:modemix}.}
+\caption{Averaged IMF set generated from EEMD of signal in Equation \ref{eqn:modemix}.
+Note that the three IMFs shown match the signal content quite well (the red line shows the sum of the IMFs, the black line is the original signal).}
 \label{fig:stackedeemdimfs}
 \end{figure}
 
@@ -298,7 +290,7 @@ This vignette demonstrates how detailed spectral information can be extracted fr
 
 The EEMD method recovers three main IMFs: a high amplitude, high frequency component, a high amplitude, low frequency component and a low frequency, low amplitude component (Fig. \ref{fig:pferesift}).
 While the presence of a high frequency component is clear from the original signal, the spindle shape of this component is not obvious until it is decomposed into an IMF.
-Although this could have been discovered by using a bandpass filter, the signal would likely have been distorted because of the transient nature of the waveform and the fact that this component has frequency modulation.
+Although this could have been discovered by using a bandpass filter, the signal could have been distorted because of the transient nature of the waveform and the fact that this component has frequency modulation.
 Therefore, the EEMD has already recovered potentially valuable information on the different components of this signal.
 
 The EEMD Hilbert spectrogram shows that each of the three components varies in frequency throughout the signal (Fig. \ref{fig:pfeht}).
@@ -320,8 +312,7 @@ However, the Hilbert spectrogram shows spectral energy arriving just after 6.5 s
 library(hht)
 data(port_foster_event)
 set.seed(628)
-#trials=100
-trials = 2 #for testign
+trials=100
 nimf=8
 noise_amp=6.4e-07
 trials_dir="example_3"
@@ -356,8 +347,7 @@ hgram=hh_render(eemd_result, dt, dfreq,
 time_span=c(5, 9)
 freq_span=c(0, 25)
 amp_span=c(1e-06, 3e-05)
-#cluster_span=c(4, 100)
-cluster_span = c(0, 100) #for testing
+cluster_span=c(4, 100)
 hhgram_image(hgram, time_span = time_span, freq_span = freq_span,
     amp_span = amp_span, cluster_span = cluster_span)
 @

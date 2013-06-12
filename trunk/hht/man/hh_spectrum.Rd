@@ -39,4 +39,4 @@ hspec <- hh_spectrum(emd_result, dfreq)
 hhspec_plot(hspec, show_fourier = TRUE, scale_fourier = TRUE)
 
 }
-\keyword{nonparametric}
+\keyword{ts}

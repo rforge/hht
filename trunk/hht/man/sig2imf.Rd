@@ -85,4 +85,4 @@ hhgram_image(hgram, time_span = time_span,
 freq_span = freq_span, amp_span = amp_span,
 pretty = TRUE)
 }
-\keyword{nonparametric}
+\keyword{ts}
