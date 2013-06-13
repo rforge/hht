@@ -1,9 +1,0 @@
-\contentsline {section}{\numberline {1}Stacked Sinusoids I}{1}
-\contentsline {subsection}{\numberline {1.1}Code}{2}
-\contentsline {subsection}{\numberline {1.2}Figures}{4}
-\contentsline {section}{\numberline {2}Stacked Sinusoids II}{8}
-\contentsline {subsection}{\numberline {2.1}Code}{8}
-\contentsline {subsection}{\numberline {2.2}Figures}{9}
-\contentsline {section}{\numberline {3}Nonlinear and Nonstationary Signal}{13}
-\contentsline {subsection}{\numberline {3.1}Code}{13}
-\contentsline {subsection}{\numberline {3.2}Figures}{15}
