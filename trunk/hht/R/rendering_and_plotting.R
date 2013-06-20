@@ -190,11 +190,11 @@ HHRender <- function(hres, dt, dfreq, time.span = NULL, freq.span = NULL, scalin
                 time.span[2]=max(hgram$tt)
                 warning("Requested time window is longer than the actual signal.")
         }
- 
-        hres$hinstfreq = array(hres$hinstfreq[which(hgram$tt >= time.span[1] & hgram$tt <= time.span[2]),,], dim = c(length(hgram$tt), hres$nimf, hres$trials))
-        hres$hamp = array(hres$hamp[hgram$tt >= time.span[1] & hgram$tt <= time.span[2],,], dim = c(length(hgram$tt), hres$nimf, hres$trials))
-        hres$original.signal = hres$original.signal[hgram$tt >= time.span[1] & hgram$tt <= time.span[2]]
-        hgram$tt = hgram$tt[hgram$tt >= time.span[1] & hgram$tt <= time.span[2]]
+        t.ind = which(hgram$tt >= time.span[1] & hgram$tt <= time.span[2])
+        hgram$tt = hgram$tt[t.ind] 
+        hres$hinstfreq = array(hres$hinstfreq[t.ind,,], dim = c(length(hgram$tt), hres$nimf, hres$trials))
+        hres$hamp = array(hres$hamp[t.ind,,], dim = c(length(hgram$tt), hres$nimf, hres$trials))
+        hres$original.signal = hres$original.signal[t.ind]
        
         grid = list()
         grid$x = hgram$tt
@@ -231,6 +231,7 @@ HHRender <- function(hres, dt, dfreq, time.span = NULL, freq.span = NULL, scalin
         hgram$combine.imfs = combine.imfs 
         hgram$hinstfreq = hres$hinstfreq
         hgram$hamp = hres$hamp 
+        hgram$original.signal = hres$original.signal
         hgram$x = imf.img$x 
         hgram$y = imf.img$y
 	hgram$dfreq=dfreq
