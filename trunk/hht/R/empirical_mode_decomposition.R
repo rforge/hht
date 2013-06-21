@@ -259,6 +259,8 @@ EEMDResift <- function(EEMD.result, resift.rule, spectral.method = "arctan", dif
 
 	resift.result=EEMD.result
 	resift.result$imf=c()
+        resift.result$hinstfreq = c()
+        resift.result$hamp = c()
 	resift.result$averaged.imfs=NULL
 
 	if(!is.numeric(resift.rule) & !resift.rule %in% c("last", "max.var", "all"))
@@ -278,10 +280,15 @@ EEMDResift <- function(EEMD.result, resift.rule, spectral.method = "arctan", dif
 				if(emd.result$nimf>=resift.rule)
 				{
 					resift.result$imf=cbind(resift.result$imf, emd.result$imf[,resift.rule])
+                                        resift.result$hamp=cbind(resift.result$hamp, emd.result$hamp[,resift.rule])
+                                        resift.result$hinstfreq=cbind(resift.result$hinstfreq, emd.result$hinstfreq[,resift.rule])
 				}
 				else
 				{
 					resift.result$imf=cbind(resift.result$imf, NA)
+                                        resift.result$hamp=cbind(resift.result$hamp, NA)
+                                        resift.result$hinstfreq=cbind(resift.result$hinstfreq, NA)
+
 				}
 			}
 			else
@@ -289,6 +296,8 @@ EEMDResift <- function(EEMD.result, resift.rule, spectral.method = "arctan", dif
 				if(resift.rule=="last")
 				{
 					resift.result$imf=cbind(resift.result$imf, emd.result$imf[,emd.result$nimf])
+                                        resift.result$hamp=cbind(resift.result$hamp, emd.result$hamp[,emd.result$nimf])
+                                        resift.result$hinstfreq=cbind(resift.result$hinstfreq, emd.result$hinstfreq[,emd.result$nimf])
 				}
 				
 				if(resift.rule=="max.var")
@@ -300,16 +309,22 @@ EEMDResift <- function(EEMD.result, resift.rule, spectral.method = "arctan", dif
 					}
 					
 					resift.result$imf=cbind(resift.result$imf, emd.result$imf[,var.list==max(var.list)])
+                                        resift.result$hamp=cbind(resift.result$hamp, emd.result$hamp[,var.list==max(var.list)])
+                                        resift.result$hinstfreq=cbind(resift.result$hinstfreq, emd.result$hinstfreq[,var.list==max(var.list)])
 				}
 
 				if(resift.rule=="all")
 				{
 					resift.result$imf=cbind(resift.result$imf, emd.result$imf)
+                                        resift.result$hamp=cbind(resift.result$hamp, emd.result$hamp)
+                                        resift.result$hinstfreq=cbind(resift.result$hinstfreq, emd.result$hinstfreq)
 				}
 			}	
 		}
 	}
-	
+
+        resift.result$EEMD.trials = resift.result$trials 
+        resift.result$trials = NULL
 	resift.result$resift.max.sift = max.sift
         resift.result$resift.tol = tol
         resift.result$resift.stop.rule = stop.rule
