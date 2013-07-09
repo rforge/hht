@@ -60,7 +60,7 @@ Plotting parameters.
 }
 }
 \details{
-For a description of how the exact analytical frequency is derived, see \url{http://www.unc.edu/\%7Ehaksaeng/hht/analytic.instantaneous.freq.pdf}
+For a description of how the exact analytical frequency is derived, see \url{http://www.unc.edu/\%7Ehaksaeng/hht/analytic_instantaneous_freq.pdf}
 }
 \value{
 \item{instfreq$sig}{The time series}

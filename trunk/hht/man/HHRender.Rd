@@ -15,14 +15,14 @@ HHRender(hres, dt, dfreq, time.span = NULL, freq.span = NULL, scaling = "none",
 \item{time.span}{Time span to render spectrogram over; \code{NULL} means over the whole time series}
 \item{freq.span}{Frequency span to include in spectrogram; \code{NULL} means render all the frequencies in the time series}
 \item{scaling}{If \code{"log"}, render a log frequency spectrogram.  Defaults to \code{"none"} (linear).}
-\item{combine.imfs}{If \code{TRUE}, add the spectra for all IMS together in one ensemble Hilbert spectrogram, if \code{FALSE}, keep separate so you can investigate individual IMFs in \code{\link{HHGramImage}}.}
+\item{combine.imfs}{If \code{TRUE}, add the spectra for all IMFS together in one ensemble Hilbert spectrogram, if \code{FALSE}, keep separate so you can investigate individual IMFs in \code{\link{HHGramImage}}.}
 \item{verbose}{If \code{TRUE}, print progress messages}
 }
 \details{
 \code{HHRender} processes Hilbert spectral data prior to displaying with \code{\link{HHGramImage}}.
 \code{HHRender} returns the ensemble Hilbert spectrogram if \code{combine.imfs = TRUE}, otherwise it returns an IMF-by-IMF Hilbert spectrogram of dimensions \code{[time, freq, imf]}.
 The user can then choose which IMFs to plot when he or she calls \code{\link{HHGramImage}}, but this makes \code{\link{HHGramImage}} run about 40x slower on my machine.
-The tradeoff is in speed versus flexibility for \code{\link{HHGramImage}}; the \code{combine.imfs} option does not affect \code{HHRender} very much.
+The trade off is in speed versus flexibility for \code{\link{HHGramImage}}; the \code{combine.imfs} option does not affect \code{HHRender} very much.
 }
 
 \note{The \code{HHRender} function also keeps track of which trial contributes what data to the spectrogram.

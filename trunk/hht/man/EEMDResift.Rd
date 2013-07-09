@@ -38,7 +38,7 @@ The function \code{\link{EEMDCompile}} generates a list of averaged IMFs from EE
 These averaged IMFs often do not satisfy the definition of an IMF, usually because some of them are mixtures of different time scales.
 This is a consequence of the noise perturbation method of EEMD, but it complicates the attempt to create a meaningful Hilbert spectrogram from the averaged IMF set.
 The resifting algorithm takes each averaged IMF and performs EMD, thereby splitting each one into multiple ``sub-IMFs'', each of which satisfy the strict definition of an IMF.
-The question then is: which of these sub-IMFs best represent the averaged IMF
+The question then is: which of these sub-IMFs best represent the averaged IMF?
 The most rigorous solution is to set \code{resift.rule} to \code{"all"}, but that tends to make a large number of sub-IMFs, many with very low amplitude.
 Another solution is to accept the sub-IMF with the most variance, as that probably represents the fundamental information content of the original averaged IMF.
 }

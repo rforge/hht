@@ -16,7 +16,7 @@ Sig2IMF(sig, tt, spectral.method = "arctan", diff.lag = 1, stop.rule = "type5",
 \item{tt}{A vector of sample times for \code{sig}}
 \item{spectral.method}{defines how to calculate instantaneous frequency - whether to use the arctangent of the analytic signal with numeric differentiation (``arctan'')
     or the result of the chain rule applied to the arctangent, then numerically differentiated ("chain");  see \code{\link{InstantaneousFrequency}}.}
-\item{diff.lag}{specifies if you want to do naive differentiation (DIFF.LAG = 1), central difference method (DIFF.LAG = 2) or higher difference methods (DIFF.LAG > 2) 
+\item{diff.lag}{specifies if you want to do naive differentiation (\code{diff.lag} = 1), central difference method (\code{diff.lag = 2} or higher difference methods (\code{diff.lag} > 2) 
      to determine instantaneous frequency; see \code{\link{InstantaneousFrequency}}.}
 \item{stop.rule}{As quoted from the EMD package documentation:  ''The stop rule of sifting. 
      The type1 stop rule indicates that absolute values 
@@ -29,7 +29,7 @@ Sig2IMF(sig, tt, spectral.method = "arctan", diff.lag = 1, stop.rule = "type5",
 \item{boundary}{how the beginning and end of the signal are handled}
 \item{sm}{Specifies how the signal envelope is constructed, see Kim et al, 2012.}
 \item{smlevels}{Specifies what level of the IMF is obtained by smoothing other than interpolation, see EMD package documentation}
-\item{spar}{User-defined smoothing parameter for spline, kernal, or local polynomial smoothing.}
+\item{spar}{User-defined smoothing parameter for spline, kernel, or local polynomial smoothing.}
 \item{max.sift}{How many sifts are allowed - if this value is exceeded the IMF is returned as-is.}
 \item{max.imf}{Maximum number of IMFs allowed.}
 \item{interm}{Specifies vector of periods to be excluded from IMFs to cope with mode mixing.}
@@ -38,7 +38,7 @@ Sig2IMF(sig, tt, spectral.method = "arctan", diff.lag = 1, stop.rule = "type5",
 This function configures and performs empirical mode decomposition using the \code{emd} function in the \code{EMD} package.
 }
 \value{ 
-\item{emd.result}{The instrinsic mode functions (IMFs), instantaneous frequencies, and instantaneous ampltitudes of \code{sig}.}
+\item{emd.result}{The intrinsic mode functions (IMFs), instantaneous frequencies, and instantaneous amplitudes of \code{sig}.}
 }
 \references{
 Kim, D., Kim, K. and Oh, H.-S. (2012) Extending the scope of empirical mode decomposition by smoothing.
