@@ -180,7 +180,7 @@ InstantaneousFrequency <- function(asig, tt, method = "arctan", lag = 1)
 }
     
 
-PrecisionTester <- function(tt = seq(0, 10, by = 0.01), method = "arctan", lag = 1, a = 1, b = 1, c = 1, omega.1 = 2 * pi, omega.2 = 4 * pi, phi.1 = 0, phi.2 = pi/6, plot.signal = TRUE, plot.instfreq = TRUE, plot.error = TRUE, ...)
+PrecisionTester <- function(tt = seq(0, 10, by = 0.01), method = "arctan", lag = 1, a = 1, b = 1, c = 1, omega.1 = 2 * pi, omega.2 = 4 * pi, phi.1 = 0, phi.2 = pi/6, plot.signal = TRUE, plot.instfreq = TRUE, plot.error = TRUE, new.device = TRUE, ...)
 {
     #This function computes the instantaeous frequency of a signal of the form
     # a sin(omega.1 t + phi.1) + b sin(omega.2 + phi.2) + c
@@ -210,6 +210,7 @@ PrecisionTester <- function(tt = seq(0, 10, by = 0.01), method = "arctan", lag =
     #    PLOT.SIGNAL - If TRUE, show the sinusoid defined by the above parameters
     #    PLOT.INSTFREQ - If TRUE, plot the analytic and numeric instantaneous frequencies against each other
     #    PLOT.ERROR - If TRUE, plot the error between the analytic and numeric instantaneous frequencies
+    #    NEW.DEVICE - IF TRUE, each plot gets its own window.  However, Sweave doesn't like dev.new, so you can turn it off if you have to.
     #    ... passes plot parameters to plotter
     #OUTPUTS
     #    INSTFREQ is the instantaneous frequency and the time series
@@ -242,23 +243,29 @@ PrecisionTester <- function(tt = seq(0, 10, by = 0.01), method = "arctan", lag =
 
     if(plot.signal)
     {
-        dev.new()
+        if(new.device) {
+            dev.new()
+        }
         plot(tt, sig, type = "l", xlab = "Time", ylab = "Amplitude", main = "Time series", ...)
     }
 
     if(plot.instfreq)
     {
-        dev.new()
+        if(new.device) {
+            dev.new()
+        }
         ylow = min(c(min(analytic.instfreq), min(numeric.instfreq)))
         yhigh = max(c(max(analytic.instfreq), max(numeric.instfreq)))
         plot(tt, analytic.instfreq, type = "l", col = "red", ylim = c(ylow, yhigh), xlab = "Time", ylab = "Frequency", main = "Analytically and numerically derived values for instantaneous frequency", ...)
-        points(tt, numeric.instfreq, ...)
-        legend("topright", lty = c(1, NA), pch = c(NA, 1), legend = c("Analytic", "Numeric"), col = c("red", "black"))
+        lines(tt, numeric.instfreq, lty = 2, col = "black")
+        legend("topright", lty = c(1, 2), legend = c("Analytic", "Numeric"), col = c("red", "black"))
     }
 
     if(plot.error)
     {
-        dev.new()
+        if(new.device) {
+            dev.new()
+        }
         plot(tt, analytic.instfreq - numeric.instfreq, type = "l", xlab = "Time", ylab = "Frequency Error", main = "Numerically derived instantaneous frequency subtracted from analytically derived instantaneous frequency", ...)
     }
 

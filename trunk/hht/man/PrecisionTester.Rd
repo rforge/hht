@@ -13,7 +13,7 @@ One can create quite complicated signals by choosing the various amplitude, freq
 PrecisionTester(tt = seq(0, 10, by = 0.01), method = "arctan", lag = 1, 
     a = 1, b = 1, c = 1, omega.1 = 2 * pi, omega.2 = 4 * pi, 
     phi.1 = 0, phi.2 = pi/6, plot.signal = TRUE, 
-    plot.instfreq = TRUE, plot.error = TRUE, ...)
+    plot.instfreq = TRUE, plot.error = TRUE, new.device = TRUE, ...)
 }
 \arguments{
   \item{tt}{
@@ -47,14 +47,17 @@ Phase shift of the first sinusoid.
 Phase shift of the second sinusoid.
 }
   \item{plot.signal}{
-Whether to open a new window and show the time series.
+Whether to show the time series.
 }
   \item{plot.instfreq}{
-Whether to open a new plot window and show the instantaneous frequencies, comparing the numerical and analytical result.
+Whether to show the instantaneous frequencies, comparing the numerical and analytical result.
 }
   \item{plot.error}{
-Whether to open a new plot window and show the difference between the numerical and analytical result.
+Whether to show the difference between the numerical and analytical result.
 }
+  \item{new.device}{
+  Whether to open each plot as a new plot window (defaults to \code{TRUE}).  However, Sweave doesn't like \code{dev.new()}.
+  If you want to use \code{PrecisionTester} in Sweave, be sure that \code{new.device = FALSE}}
   \item{\dots}{
 Plotting parameters.
 }
