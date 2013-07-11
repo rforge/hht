@@ -9,7 +9,7 @@ Authors@R: c(person(given="Daniel C.",family="Bowman", role=c("aut", "cre"),
 Depends: R (>= 3.0.0), EMD (>= 1.5.5), fields (>= 6.7.6)
 Description: This package builds on the EMD package to provide additional tools for empirical mode decomposition (EMD) and Hilbert spectral analysis. It also implements the ensemble empirical decomposition (EEMD) method to avoid mode mixing and intermittency problems found in EMD analysis.  The package comes with several plotting methods that can be used to view intrinsic mode functions, the HHT spectrum, and the Fourier spectrum.  The newest version (2.0.0) contains major changes and upgrades, and is not backwards compatible with hht 1.0.0.
 License: GPL (>= 3)
-URL: http://www.r-project.org
+URL: https://code.google.com/p/r-hht/
 Packaged: 2013-07-09 19:36:50 UTC; bowman
 Author: Daniel Bowman [aut, cre]
 Maintainer: Daniel Bowman <daniel.bowman@unc.edu>
