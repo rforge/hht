@@ -1,0 +1,1 @@
+CombineTrials fails when copy = FALSE
