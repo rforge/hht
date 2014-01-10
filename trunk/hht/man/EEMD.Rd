@@ -8,7 +8,8 @@ This function performs ensemble empirical mode decomposition (EEMD).
 EEMD(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = TRUE, 
     spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200,
     stop.rule = "type5", boundary = "wave", sm = "none",
-    smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL)
+    smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL, 
+    noise.type = "gaussian")
 }
 \arguments{
 \item{sig}{a time series to be decomposed (vector)}
@@ -29,6 +30,8 @@ EEMD(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = TRUE,
 \item{spar}{See \code{\link{Sig2IMF}}.}
 \item{max.imf}{See \code{\link{Sig2IMF}}.}
 \item{interm}{See \code{\link{Sig2IMF}}.}
+\item{noise.type}{If unspecified or \code{gaussian}, produce a Gaussian noise series with length \code{length(sig)} and standard deviation \code{noise.amp}.
+    If \code{uniform}, produce a uniform random distribution with length \code{length(sig)} and maximum absolute value of \code{noise.amp}}
 }
 \details{
 This function performs ensemble empirical mode decomposition, a noise assisted version of the EMD algorithm.
@@ -48,6 +51,9 @@ Keep in mind that the EEMD is an expensive algorithm and may take significant ti
 Wu, Z. A. and Huang, N. E. (2009) Ensemble empirical mode decomposition: {A} noise assisted data analysis method.
 \emph{Advances in Adaptive Data Analysis}, \bold{1}, 1-41.
 }
+
+\note{Previous versions of this function used a uniform random noise distribution (i.e. \code{runif}) to generate the noise time series.
+The default noise time series is now Gaussian in accordance with existing EEMD literature.}
 
 \author{Daniel Bowman \email{daniel.bowman@unc.edu}}
 
