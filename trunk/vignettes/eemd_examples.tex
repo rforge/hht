@@ -1,7 +1,7 @@
 \documentclass[12pt]{article}
 \usepackage{placeins}
 \usepackage{amsmath}
-\usepackage{/usr/local/lib64/R/share/texmf/tex/latex/Sweave}
+\usepackage{Sweave}
 \begin{document}
 \setkeys{Gin}{width=\textwidth}
 \title{Improving the Performance of the HHT using Ensemble Empirical Mode Decomposition}
@@ -43,7 +43,7 @@ While the EMD successfully removes the nonlinear signal from the lower frequency
 These oscillations are not implied in the signal equation and likely represent problems with the spline fitting method in the EMD.
 
 If low amplitude Gaussian white noise is added to the signal, the spline fitting issue is solved (Fig. \ref{fig:nonlinstarand}).
-However, this creates a lot more IMFs, and the transient nonlinear signal $a.{1}\sin(\omega.{1}t+a.2\sin(\omega.{2} t))e^{\frac{-(t-50)^{2})}{200}}$ is now distributed across multiple IMFs rather than residing on a single IMF.
+However, this creates a lot more IMFs, and the transient nonlinear signal is now distributed across multiple IMFs rather than residing on a single IMF.
 This problem is called \emph{mode mixing} and reflects the fact that random noise populates all time scales equally.
 Mode mixing can cause aliasing in the Hilbert transform because it disturbs local symmetry in the affected IMFs.
 
@@ -310,7 +310,7 @@ Adjusting Time and Frequency limits to nice looking numbers (the "pretty" option
 A network of ocean bottom seismometers was deployed in Port Foster  (the flooded caldera of Deception Island volcano) in 2005.
 These instruments recorded numerous transient seismic events.
 One of these events has been included as an example data set in this R package.
-This vignette demonstrates how detailed spectral information can be extracted from this signal using the EEMD method.
+The following example demonstrates how detailed spectral information can be extracted from this signal using the EEMD method.
 
 The EEMD method recovers three main IMFs: a high amplitude, high frequency component, a high amplitude, low frequency component and a low frequency, low amplitude component (Fig. \ref{fig:pferesift}).
 While the presence of a high frequency component is clear from the original signal, the spindle shape of this component is not obvious until it is decomposed into an IMF.
@@ -410,7 +410,7 @@ However, the Hilbert spectrogram shows spectral energy arriving just after 6.5 s
 \includegraphics{eemd_examples-pferesift}
 \end{center}
 \caption{Averaged IMFs from EEMD of transient seismic signal.
-The red line shows sum of displayed IMFs, black line shows original signal.}
+The red line shows the sum of displayed IMFs; the black line shows the original signal.}
 \label{fig:pferesift}
 \end{figure}
 
@@ -426,7 +426,7 @@ The red line shows sum of displayed IMFs, black line shows original signal.}
 \begin{center}
 \includegraphics{eemd_examples-pfeft}
 \end{center}
-\caption{Fourier spectrogram of EEMD of transient seismic signal.}
+\caption{Fourier spectrogram of transient seismic signal.}
 \label{fig:pfeft}
 \end{figure}
 

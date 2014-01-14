@@ -1,7 +1,7 @@
 \documentclass[12pt]{article}
 \usepackage{placeins}
 \usepackage{natbib}
-\usepackage{/usr/local/lib64/R/share/texmf/tex/latex/Sweave}
+\usepackage{Sweave}
 \begin{document}
 \setkeys{Gin}{width=\textwidth}
 \title{Investigating some Interesting Signals with Hilbert and Fourier Spectrograms}
@@ -217,8 +217,8 @@ This and other shortcomings of the EMD method are discussed extensively in D\"{a
 > amp.span = c(0.1, 1)
 > HHGramImage(hgram, time.span = time.span, freq.span = freq.span,
 +     amp.span = amp.span, pretty = TRUE,
-+     img.x.format = ".0f", img.y.format = "%.0f",
-+     colorbar.format = ".0f", trace.format = "%.1f")
++     img.x.format = "%.0f", img.y.format = "%.0f",
++     colorbar.format = "%.0f", trace.format = "%.1f")
 \end{Sinput}
 \begin{Soutput}
 Adjusting Time and Frequency limits to nice looking numbers (the "pretty" option is currently set to TRUE)
@@ -236,8 +236,8 @@ Adjusting Time and Frequency limits to nice looking numbers (the "pretty" option
 > freq.span=c(0, 3)
 > amp.span=c(20, 150)
 > FTGramImage(sig, dt, ft, time.span, freq.span, amp.span,
-+     img.x.format = ".0f", img.y.format = "%.1f",
-+     colorbar.format = ".0f", trace.format = "%.1f", pretty = TRUE)
++     img.x.format = "%.0f", img.y.format = "%.1f",
++     colorbar.format = "%.0f", trace.format = "%.1f", pretty = TRUE)
 \end{Sinput}
 \begin{Soutput}
 Adjusting Time and Frequency limits to nice looking numbers (the "pretty" option is currently set to TRUE)
@@ -292,7 +292,7 @@ Adjusting Time and Frequency limits to nice looking numbers (the "pretty" option
 \section{Nonlinear and Nonstationary Signal}
 While the Fourier spectrogram is essentially equivalent to or superior to the Hilbert spectrogram for linear and stationary signals,
 the true power of the HHT emerges when the signals are neither linear nor stationary.
-Here, we investigate a frequency modulated wave combined with a low frequency sinusoidal wave with increasing frequency over time:
+Here, we investigate a frequency modulated wave packet combined with a low frequency sinusoidal wave packet with increasing frequency over time:
 
 \begin{equation}
 \label{eqn:nonlinsta}
@@ -300,13 +300,9 @@ x (t) = \sin(2\pi t+0.5\sin(\frac{\pi}{4} t))e^{\frac{-(t-100)^{2}}{750}} + \sin
 \end{equation}
 
 The EMD successfully separates the components of the signal (Fig. \ref{fig:nonlinstaimfs}).
-The Hilbert spectrogram describes the signal as a frequency modulated trace centered around 1 Hz and a 
-sinusoidal trace with steadily increasing frequency (Fig. \ref{fig:nonlinstaht}).
-However, the Fourier spectrogram shows several harmonics that are not implied by Equation \ref{eqn:nonlinsta} (Fig. \ref{fig:nonlinstaft}).
-Additional aliasing is present at lower frequencies, perhaps because the window is not quite long enough to capture the 0.1 Hz signal.
-The nonphysical harmonics in the Fourier spectrogram are a consequence of representing a nonlinear signal as a linear combination of sinusoids.
-Note the spline fitting errors at the beginning and ending of the IMF set (Fig. \ref{fig:nonlinstaimfs}).
-This issue is addressed in the vignette ``Improving the Performance of the HHT using Ensemble Empirical Mode Decomposition.''
+The Hilbert spectrogram describes the signal as a frequency modulated wave centered around 1 Hz combined with a 
+sinusoid with steadily increasing frequency (Fig. \ref{fig:nonlinstaht}).
+However, the Fourier spectrogram shows several low amplitude harmonics that are not implied by Equation \ref{eqn:nonlinsta} (Fig. \ref{fig:nonlinstaft}).
 
 \subsection{Code}
 
@@ -350,8 +346,8 @@ This issue is addressed in the vignette ``Improving the Performance of the HHT u
 > amp.span=c(0.1, 1)
 > HHGramImage(hgram, time.span = time.span, 
 +     freq.span = freq.span, amp.span = amp.span,
-+     img.x.format = ".0f", colorbar.format = ".1f", 
-+     trace.format= ".1f", img.y.format = ".1f", pretty = TRUE)
++     img.x.format = "%.0f", colorbar.format = "%.1f", 
++     trace.format= "%.1f", img.y.format = "%.1f", pretty = TRUE)
 \end{Sinput}
 \begin{Soutput}
 Adjusting Time and Frequency limits to nice looking numbers (the "pretty" option is currently set to TRUE)
@@ -369,9 +365,9 @@ Adjusting Time and Frequency limits to nice looking numbers (the "pretty" option
 > freq.span = c(0, 2)
 > amp.span=c(100,500)
 > FTGramImage(sig, dt, ft, freq.span = freq.span,
-+     amp.span = amp.span, img.x.format = ".0f",
-+     colorbar.format = ".0f", trace.format= ".1f",
-+     img.y.format = ".1f", pretty = TRUE)
++     amp.span = amp.span, img.x.format = "%.0f",
++     colorbar.format = "%.0f", trace.format= "%.1f",
++     img.y.format = "%.1f", pretty = TRUE)
 \end{Sinput}
 \begin{Soutput}
 Adjusting Time and Frequency limits to nice looking numbers (the "pretty" option is currently set to TRUE)
@@ -386,8 +382,7 @@ Adjusting Time and Frequency limits to nice looking numbers (the "pretty" option
 \begin{center}
 \includegraphics{interesting_signals-nonlinstaimfs}
 \end{center}
-\caption{EMD of signal in Equation \ref{eqn:nonlinsta}.
-The distortions at the beginning and end of IMF 2 is due to spline fitting errors.}
+\caption{EMD of signal in Equation \ref{eqn:nonlinsta}.}
 \label{fig:nonlinstaimfs}
 \end{figure}
 

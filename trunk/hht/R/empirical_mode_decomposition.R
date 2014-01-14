@@ -61,7 +61,7 @@ CombineTrials <- function(in.dirs, out.dir, copy = TRUE)
    }
 }
 
-EEMD <-function(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = TRUE, spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200, stop.rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL, noise.type = "gaussian") 
+EEMD <-function(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = TRUE, spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200, stop.rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL, noise.type = "gaussian", noise.array = NULL) 
 {
 	#Performs the Ensemble Empirical Mode Decomposition as described in Huang and Wu (2008) A Review on the Hilbert Huang Transform Method and its Applications to Geophysical Studies
 	#It runs EMD on a given signal for N=TRIALS
@@ -91,7 +91,8 @@ EEMD <-function(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = T
         #   SPAR - User-defined smoothing parameter for spline, kernal, or local polynomial smoothign
         #   MAX.IMF - How many IMFs are allowed, IMFs above this number will not be recorded
         #   INTERM - specifies vector of periods to be excluded from IMFs to cope with mode mixing.  I do not use this; instead I use the EEMD method.
-        #   NOISE.TYPE - zero mean gaussian with standard deviation NOISE.AMP (if "gaussian" or unspecified), or "uniform" (absolute maximum/minimum amplitude)
+        #   NOISE.TYPE - zero mean gaussian with standard deviation NOISE.AMP (if "gaussian" or unspecified), or "uniform" (absolute maximum/minimum amplitude), or "custom" (user defined noise matrix, expects NOISE.MATRIX)
+        #   NOISE.ARRAY - A TRIALS x LENGTH(TT) matrix of user-defined noise to use in place of gaussian or uniform noise.  NOISE.TYPE must be set to "custom" for this input to be used.
 
         
 	#OUTPUTS are saved to TRIALS.DIR in variable EMD.RESULT
@@ -107,6 +108,20 @@ EEMD <-function(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = T
 		print(paste("Created trial directory:",trials.dir))
 	}
 
+        if(!(noise.type  %in% c("uniform", "gaussian", "custom"))) {
+            stop(paste("Did not recognise noise.type option", noise.type,  "Please choose either ''uniform'' or ''gaussian''"))
+        }
+
+        if(noise.type == "custom") {
+            if(!is.null(noise.array)) {
+                if((dim(noise.array)[1] != trials) | dim(noise.array)[2] != length(tt)) {
+                    stop("You requested a custom noise array but either the number of rows did not equal the number of EEMD trials or the number of columns did not equal the signal length, or both.")
+                }
+            } else {
+                stop("If noise.type = \"custom\", then you must set noise.array equal to an array with the same number of rows as EEMD trials and the same number of columns as signal samples.")
+            }
+        }
+     
 	averaged.imfs=array(0,nimf*length(sig),dim=c(length(sig),nimf))
 	averaged.noise=array(0,length(sig),dim=c(length(sig),1))
 	averaged.residue=array(0,length(sig),dim=c(length(sig),1))
@@ -116,8 +131,8 @@ EEMD <-function(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = T
 		    noise=runif(length(sig),min=noise.amp*-1, max=noise.amp)
                 } else if (noise.type == "gaussian") {
                     noise = rnorm(length(sig), mean = 0, sd = noise.amp)
-                } else {
-                    stop(paste("Did not recognise noise.type option", noise.type,  "Please choose either ''uniform'' or ''gaussian''"))
+                } else if (noise.type == "custom") {
+                    noise <- noise.array[j, ]
                 }
 		tmpsig=sig+noise
 		emd.result=Sig2IMF(tmpsig,tt, spectral.method = spectral.method, diff.lag = diff.lag, 

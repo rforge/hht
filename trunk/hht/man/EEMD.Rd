@@ -9,7 +9,7 @@ EEMD(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = TRUE,
     spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200,
     stop.rule = "type5", boundary = "wave", sm = "none",
     smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL, 
-    noise.type = "gaussian")
+    noise.type = "gaussian", noise.array = NULL)
 }
 \arguments{
 \item{sig}{a time series to be decomposed (vector)}
@@ -31,7 +31,11 @@ EEMD(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = TRUE,
 \item{max.imf}{See \code{\link{Sig2IMF}}.}
 \item{interm}{See \code{\link{Sig2IMF}}.}
 \item{noise.type}{If unspecified or \code{gaussian}, produce a Gaussian noise series with length \code{length(sig)} and standard deviation \code{noise.amp}.
-    If \code{uniform}, produce a uniform random distribution with length \code{length(sig)} and maximum absolute value of \code{noise.amp}}
+    If \code{uniform}, produce a uniform random distribution with length \code{length(sig)} and maximum absolute value of \code{noise.amp}.
+    If \code{custom}, then use a custom noise array as defined in input parameter \code{noise.array} (see below).}
+\item{noise.array}{If \code{noise.type = "custom"}, this array must be a TRIALS x LENGTH(TT) collection of time series to be used in the place of uniform or gaussian noise.
+    Each row in the array corresponds to the noise series added for that particular trial during the EEMD run.
+    By default, \code{noise.array = NULL}.}
 }
 \details{
 This function performs ensemble empirical mode decomposition, a noise assisted version of the EMD algorithm.
