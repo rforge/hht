@@ -211,7 +211,7 @@ HHRender <- function(hres, dt, dfreq, time.span = NULL, freq.span = NULL, scalin
         for(i in seq(hres$nimf))
         {
             x = array(c(rep(hgram$tt,hres$trials), hres$hinstfreq[,i,]), dim = c(length(hgram$tt)*hres$trials, 2))
-            imf.img = as.image(hres$hamp[,i,], grid = grid, x = x)
+            imf.img = fields::as.image(hres$hamp[,i,], grid = grid, x = x)
             imf.img$z[is.na(imf.img$z)] = 0
             imf.img$weights[is.na(imf.img$weights)] = 0
             if(combine.imfs)

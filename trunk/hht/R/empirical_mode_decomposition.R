@@ -392,7 +392,7 @@ Sig2IMF <- function(sig, tt, spectral.method = "arctan", diff.lag = 1, stop.rule
     #Danny Bowman
     #UNC Chapel Hill
 
-    emd.result=emd(sig, tt, max.sift=max.sift, stoprule=stop.rule, tol=tol, 
+    emd.result=EMD::emd(sig, tt, max.sift=max.sift, stoprule=stop.rule, tol=tol, 
         boundary=boundary,sm=sm,spar=spar, 
         check=FALSE, plot.imf=FALSE,max.imf=max.imf)
     emd.result$original.signal=sig
