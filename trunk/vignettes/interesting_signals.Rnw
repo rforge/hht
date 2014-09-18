@@ -63,7 +63,7 @@ emd.result=Sig2IMF(sig, tt, max.sift = max.sift,
 @
 
 \textbf{Plot original signal and IMFs.}
-<<label=stacked1imfscode,include=FALSE>>=
+<<label=stacked1imfscode,include=FALSE,fig=TRUE>>=
 time.span=c(0,50)
 imf.list=1:4
 os=TRUE
