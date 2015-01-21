@@ -1,8 +1,8 @@
 citHeader("To cite package 'hht' in publications use:")
 bibentry(bibtype = "Article",
 title = "The {Hilbert-Huang} Transform: A High Resolution Spectral Method for Nonlinear and Nonstationary Time Series",
-author = c(person(given = "Daniel", middle = "C.", family = "Bowman"), 
-   person(given = "Jonathan", middle = "M.", family = "Lees")),
+author = c(person(given = "Daniel C.", family = "Bowman"), 
+   person(given = "Jonathan M.", family = "Lees")),
 journal = {"Seismological Research Letters"},
 year = {"2013"},
 number = {"6"},
