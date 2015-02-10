@@ -1,6 +1,6 @@
 # Plotting and data analysis functions
 
-FTGramImage <- function(sig, dt, ft, time.span = NULL, freq.span = NULL, amp.span = NULL, blur = NULL, taper = 0.05, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=FALSE, ...)
+FTGramImage <- function(sig, dt, ft, time.span = NULL, freq.span = NULL, amp.span = NULL, blur = NULL, taper = 0.05, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=FALSE, plot = TRUE, ...)
 {
 	#Plots a Fourier spectrogram
 	#INPUTS
@@ -23,6 +23,7 @@ FTGramImage <- function(sig, dt, ft, time.span = NULL, freq.span = NULL, amp.spa
         #    BACKCOL is a 3 element vector of RGB values for the background of the spectrogram, based on a 0 to 255 scale: [red, green, blue]
         #    COLORMAP is an R palette object determining how the spectrogram colors should look
         #    PRETTY is a boolean asking whether to adjust axis labels so that they're pretty (TRUE) or give the exactly specified time and frequency intervals (FALSE)
+        #    PLOT - If TRUE, show the spectrogram, if FALSE, just return image data
         #    OPTIONAL PARAMETERS
         #       TRACE.FORMAT is the format of the trace minima and maxima in sprintf format
         #       IMG.X.FORMAT is the format of the X axis labels of the image in sprintf format
@@ -36,6 +37,8 @@ FTGramImage <- function(sig, dt, ft, time.span = NULL, freq.span = NULL, amp.spa
         #       MAIN gives the figure a title.
         #OUTPUTS
         #    IMG is the spectrogram	
+        #    TRACE is the time series being shown
+
 	opts = list(...)
 
         if(!"img.x.lab" %in% names(opts))
@@ -110,9 +113,11 @@ FTGramImage <- function(sig, dt, ft, time.span = NULL, freq.span = NULL, amp.spa
         trace$tt = ev$tt[ev$tt >= time.span[1] & ev$tt <= time.span[2]]
        
         window = ft$ns / (length(tt[tt >= min(img$x) & tt <= max(img$x)]))
-        HHTPackagePlotter(img, trace, amp.span, blur = blur, opts$img.x.lab, opts$img.y.lab, window = window, colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
+        if(plot) {
+            HHTPackagePlotter(img, trace, amp.span, blur = blur, opts$img.x.lab, opts$img.y.lab, window = window, colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
+        }
  
-        invisible(img)
+        invisible(list(img = img, trace = trace))
 
 }		
 
@@ -280,7 +285,7 @@ HHSpectrum <- function(hres, dfreq, freq.span = NULL, time.span = NULL, scaling 
   invisible(hspec)
 } 
 
-HHGramImage <- function(hgram,time.span = NULL,freq.span = NULL, amp.span = NULL, blur = NULL, clustergram = FALSE, cluster.span=NULL, imf.list = NULL, fit.line = FALSE, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=FALSE, ...)
+HHGramImage <- function(hgram,time.span = NULL,freq.span = NULL, amp.span = NULL, blur = NULL, clustergram = FALSE, cluster.span=NULL, imf.list = NULL, fit.line = FALSE, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=FALSE, plot = TRUE, ...)
 {
 	#Plots a spectrogram of the EEMD processed signal as an image.	
 	#INPUTS
@@ -310,6 +315,7 @@ HHGramImage <- function(hgram,time.span = NULL,freq.span = NULL, amp.span = NULL
         #       BACKCOL is a 3 element vector of RGB values for the background of the spectrogram, based on a 0 to 255 scale: [red, green, blue]
         #       COLORMAP is an R palette object determining how the spectrogram colors should look
         #       PRETTY is a boolean asking whether to adjust axis labels so that they're pretty (TRUE) or give the exactly specified time and frequency intervals (FALSE)
+        #       PLOT - If TRUE, show the spectrogram, if FALSE, just return the image and trace
 	#OPTIONAL PARAMETERS
         #       TRACE.FORMAT is the format of the trace minima and maxima in sprintf format
         #       IMG.X.FORMAT is the format of the X axis labels of the image in sprintf format
@@ -322,6 +328,7 @@ HHGramImage <- function(hgram,time.span = NULL,freq.span = NULL, amp.span = NULL
         #       IMG.Y.LAB is the Y - axis label of the image, it defaults to "frequency"
         #OUTPUTS
         #     IMG is the spectrogram returned as an image
+        #     TRACE is the time series being shown
 
         opts = list(...)
  
@@ -458,9 +465,11 @@ HHGramImage <- function(hgram,time.span = NULL,freq.span = NULL, amp.span = NULL
         trace$sig = hgram$original.signal[hgram$tt >= time.span[1] & hgram$tt <= time.span[2]]
         trace$tt = hgram$tt[hgram$tt >= time.span[1] & hgram$tt <= time.span[2]]
 
-        HHTPackagePlotter(img, trace, amp.span, opts$img.x.lab, opts$img.y.lab, blur = blur, fit.line = fit.line, colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
+        if(plot) {
+            HHTPackagePlotter(img, trace, amp.span, opts$img.x.lab, opts$img.y.lab, blur = blur, fit.line = fit.line, colormap = colormap, backcol = backcol, pretty = pretty, grid = grid, colorbar = colorbar, opts = opts)
+        }
     
-        invisible(img)
+        invisible(list(img = image, trace = trace))
 }
 
 HHSpecPlot <- function(hspec, freq.span = NULL, scaling = "none", imf.list = NULL, show.total = TRUE, show.fourier = FALSE, scale.fourier = FALSE, show.imfs = FALSE, legend = TRUE, ...)
