@@ -515,7 +515,7 @@ EEMDResift <- function(EEMD.result, resift.rule, spectral.method = "arctan", dif
 	invisible(resift.result)
 }
 
-Sig2IMF <- function(sig, tt, spectral.method = "arctan", diff.lag = 1, stop.rule = "type5", tol = 5, boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.sift = 200, max.imf = 100, interm = NULL)
+Sig2IMF <- function(sig, tt, complete.residue = TRUE, spectral.method = "arctan", diff.lag = 1, stop.rule = "type5", tol = 5, boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.sift = 200, max.imf = 100, interm = NULL)
 
 {
     #Extract IMFs
@@ -525,6 +525,8 @@ Sig2IMF <- function(sig, tt, spectral.method = "arctan", diff.lag = 1, stop.rule
     #INPUTS
     #	SIG is the time series
     #   TT is the sample times 
+    #   COMPLETE.RESIDUE - If TRUE, differentiate the residue once EMD is done, run EMD on the derivative, then re-integrate.
+    #       This insures that the residue is monotonic and not oscillatory.
     #   SPECTRAL.METHOD defines how to calculate instantaneous frequency - whether to use the arctangent of the analytic signal with numeric differentiation ("arctan")  
     #   or the result of the chain rule applied to the arctangent, then numerically differentiated ("chain"); chain is dangerous at high frequencies
     #   DIFF.LAG specifies if you want to do naive differentiation (DIFF.LAG = 1), central difference method (DIFF.LAG = 2) or higher difference methods (DIFF.LAG > 2)
@@ -549,6 +551,19 @@ Sig2IMF <- function(sig, tt, spectral.method = "arctan", diff.lag = 1, stop.rule
     emd.result=EMD::emd(sig, tt, max.sift=max.sift, stoprule=stop.rule, tol=tol, 
         boundary=boundary,sm=sm,spar=spar, 
         check=FALSE, plot.imf=FALSE,max.imf=max.imf)
+
+    if(complete.residue) { #Calculate derivative of residual
+        diff.res <- sfsmisc::D1D2(tt, emd.result$residue)$D1
+        emd.res.tmp <- EMD::emd(diff.res, tt, max.sift=max.sift, stoprule=stop.rule, tol=tol,
+        boundary=boundary,sm=sm,spar=spar,
+        check=FALSE, plot.imf=FALSE,max.imf=max.imf)
+        if(emd.res.tmp$nimf > 0) {
+            emd.result$nimf <- emd.result$nimf + emd.res.tmp$nimf
+            emd.result$imf  <- cbind(emd.result$imf, apply(emd.res.tmp$imf, 1, cumsum))
+            emd.result$residue <- cumsum(emd.res.tmp$residue)
+        }
+    }
+    stop("this is incomplete") 
     emd.result$original.signal=sig
     emd.result$tt=tt
     emd.result$max.sift = max.sift
