@@ -554,16 +554,17 @@ Sig2IMF <- function(sig, tt, complete.residue = TRUE, spectral.method = "arctan"
 
     if(complete.residue) { #Calculate derivative of residual
         diff.res <- sfsmisc::D1D2(tt, emd.result$residue)$D1
+        remainder <- mean(emd.result$residue)
         emd.res.tmp <- EMD::emd(diff.res, tt, max.sift=max.sift, stoprule=stop.rule, tol=tol,
         boundary=boundary,sm=sm,spar=spar,
         check=FALSE, plot.imf=FALSE,max.imf=max.imf)
         if(emd.res.tmp$nimf > 0) {
             emd.result$nimf <- emd.result$nimf + emd.res.tmp$nimf
-            emd.result$imf  <- cbind(emd.result$imf, apply(emd.res.tmp$imf, 1, cumsum))
-            emd.result$residue <- cumsum(emd.res.tmp$residue)
+            emd.result$imf  <- cbind(emd.result$imf, pracma::cumtrapz(tt, emd.res.tmp$imf))
+            emd.result$residue <- pracma::cumtrapz(tt, emd.res.tmp$residue) + remainder
         }
     }
-    stop("this is incomplete") 
+    stop("incomplete!")
     emd.result$original.signal=sig
     emd.result$tt=tt
     emd.result$max.sift = max.sift
