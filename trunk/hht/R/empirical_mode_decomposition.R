@@ -553,7 +553,7 @@ Sig2IMF <- function(sig, tt, complete.residue = TRUE, spectral.method = "arctan"
         check=FALSE, plot.imf=FALSE,max.imf=max.imf)
 
     if(complete.residue) { #Calculate derivative of residual
-        diff.res <- sfsmisc::D1D2(tt, emd.result$residue)$D1
+        diff.res <- -Im(fft(fft(emd.result$residue) * complex(real = 0, imaginary = -1), inverse = TRUE))/length(sig) #This is wrong
         remainder <- mean(emd.result$residue)
         emd.res.tmp <- EMD::emd(diff.res, tt, max.sift=max.sift, stoprule=stop.rule, tol=tol,
         boundary=boundary,sm=sm,spar=spar,
