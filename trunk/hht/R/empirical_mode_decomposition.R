@@ -2,7 +2,7 @@
 ##AND ALSO RUNS THE ENSEMBLE EMD METHOD
 ##AND COMPLETE ENSEMBLE EMD METHOD
 
-CEEMD <- function(sig, tt, noise.amp, trials, verbose = TRUE, spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200, stop.rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL, noise.type = "gaussian", noise.array = NULL)
+CEEMD <- function(sig, tt, noise.amp, trials, verbose = TRUE, complete.residue = TRUE, spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200, stop.rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL, noise.type = "gaussian", noise.array = NULL)
 {
         #Performs the Complete Ensemble Empirical Mode Decomposition as described in Torres et al (2011) A Complete Empirical Mode Decomposition with Adaptive Noise 
         #It runs EMD on a given signal for N=TRIALS
@@ -14,6 +14,7 @@ CEEMD <- function(sig, tt, noise.amp, trials, verbose = TRUE, spectral.method = 
         #   NOISE.AMP is the amplitude of the noise distribution (upper/lower cutoff if uniform, standard deviation if gaussian, ignored otherwise)
         #   TRIALS is the number of times to run EMD
         #   VERBOSE - if TRUE, print progress
+        #   COMPLETE.RESIDUE - Ensure that residue is monotonic or single extremum
         #   SPECTRAL.METHOD defines how to calculate instantaneous frequency - whether to use the arctangent of the analytic signal with numeric differentiation ("arctan")  
         #   or the result of the chain rule applied to the arctangent, then numerically differentiated ("chain"); chain is dangerous at high frequencies
         #   DIFF.LAG specifies if you want to do naive differentiation (DIFF.LAG = 1), central difference method (DIFF.LAG = 2) or higher difference methods (DIFF.LAG > 2)
@@ -63,7 +64,7 @@ CEEMD <- function(sig, tt, noise.amp, trials, verbose = TRUE, spectral.method = 
 
      imfs <- rep(0, length(sig))
      for(k in 1:trials) {
-         imfs <- imfs + Sig2IMF(sig + noise[k, ], tt, spectral.method = spectral.method, diff.lag = diff.lag,
+         imfs <- imfs + Sig2IMF(sig + noise[k, ], tt, complete.residue = FALSE, spectral.method = spectral.method, diff.lag = diff.lag,
              tol = tol, max.sift = max.sift, stop.rule = stop.rule, boundary = boundary,
              sm = sm, smlevels = smlevels, spar = spar, max.imf = 1, interm = interm)$imf[, 1]
          if(verbose) {
@@ -83,7 +84,7 @@ CEEMD <- function(sig, tt, noise.amp, trials, verbose = TRUE, spectral.method = 
      }
 
      for(k in 1:trials) {
-         noise.imfs[[k]] <- Sig2IMF(noise[k, ], tt, spectral.method = spectral.method, diff.lag = diff.lag,
+         noise.imfs[[k]] <- Sig2IMF(noise[k, ], tt, complete.residue = FALSE, spectral.method = spectral.method, diff.lag = diff.lag,
              tol = tol, max.sift = max.sift, stop.rule = stop.rule, boundary = boundary,
              sm = sm, smlevels = smlevels, spar = spar, max.imf = max.imf, interm = interm)$imf
          if(verbose) {
@@ -96,7 +97,14 @@ CEEMD <- function(sig, tt, noise.amp, trials, verbose = TRUE, spectral.method = 
      n.i <- 1
      noise.imf <- rep(0, length(sig))
      escape <- FALSE
-     while(n.i < max.imf & EMD::extrema(r)$nextreme > 2) {
+     
+     if(complete.residue) {
+         extrema.number <- 1
+     } else {
+         extrema.number <- 2
+     }
+
+     while(n.i < max.imf & EMD::extrema(r)$nextreme > extrema.number) {
          imf.avg <- rep(0, length(sig))
          for(k in 1:trials) {
              #Extract only the first IMF of the series
@@ -106,8 +114,8 @@ CEEMD <- function(sig, tt, noise.amp, trials, verbose = TRUE, spectral.method = 
              } else {
                  noise.imf <- noise.imfs[[k]][, n.i]
              }
-             if(EMD::extrema(r + noise.imf)$nextreme > 2) {
-                 imf.avg <- imf.avg + Sig2IMF(r + noise.imf, tt, 
+             if(EMD::extrema(r + noise.imf)$nextreme > extrema.number) {
+                 imf.avg <- imf.avg + Sig2IMF(r + noise.imf, tt, complete.residue = complete.residue, 
                      spectral.method = spectral.method, diff.lag = diff.lag,
                      tol = tol, max.sift = max.sift, stop.rule = stop.rule, boundary = boundary,
                      sm = sm, smlevels = smlevels, spar = spar, max.imf = 1, interm = interm)$imf[, 1]
@@ -151,10 +159,16 @@ CEEMD <- function(sig, tt, noise.amp, trials, verbose = TRUE, spectral.method = 
        ceemd.result$hinstfreq[, i] = InstantaneousFrequency(aimf, tt, method = spectral.method, lag = diff.lag)
        ceemd.result$hamp[, i] = HilbertEnvelope(aimf)
    }
+
+   if(complete.residue) {
+       ceemd.result <- DecomposeResidue(ceemd.result)
+   }
+
    invisible(ceemd.result)
 
    
 } 
+
 CombineTrials <- function(in.dirs, out.dir, copy = TRUE)
 {
    #Moves trial files from different directories, numbers them sequentially, and puts them in the specified directory.
@@ -215,7 +229,44 @@ CombineTrials <- function(in.dirs, out.dir, copy = TRUE)
    }
 }
 
-EEMD <-function(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = TRUE, spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200, stop.rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL, noise.type = "gaussian", noise.array = NULL) 
+DecomposeResidue <- function(emd.result, tol = 5, max.sift = 200, stop.rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL) {
+
+     #Decomposes the residual of the EMD method into a purely monotonic or single-extremum time series.
+     #It does this by differentiating the residual, taking the EMD, and re-integrating.
+     #Some numerical error from differentiation is introduced.
+     #INPUTS
+     #    EMD.RESULT - Result of EMD of original signal
+     #       MAX.SIFT stop sifting after this many times
+     #       STOP.RULE as quoted from the EMD package:  "stopping rule of sifting. The type1 stopping rule indicates that absolute values 
+     #       of envelope mean must be less than the user-specified tolerance level in the sense
+     #       that the local average of upper and lower envelope is zero. The stopping rules
+     #       type2, type3, type4 and type5 are the stopping rules given by equation (5.5)
+     #       of Huang et al. (1998), equation (11a), equation (11b) and S stoppage of Huang
+     #       and Wu (2008), respectively."
+     #       BOUNDARY - how the beginning and end of the signal are handled
+     #       SM - Specifies how the signal envelope is constructed, see Kim et al, 2012.
+     #       SMLEVELS - Specifies what level of the IMF is obtained by smoothing other than interpolation - not sure what this means
+     #       SPAR - User-defined smoothing parameter for spline, kernal, or local polynomial smoothign
+     #       MAX.IMF - How many IMFs are allowed, IMFs above this number will not be recorded
+     #       INTERM - specifies vector of periods to be excluded from IMFs to cope with mode mixing.  I do not use this; instead I use the EEMD method.
+     #OUTPUTS
+     #    EMD.RESULT - Now with residual satisfying criteria of monotonic/single extremum
+
+     diff.res <- sfsmisc::D1D2(emd.result$tt, emd.result$residue)$D1
+     remainder <- mean(emd.result$residue)
+     emd.res.tmp <- EMD::emd(diff.res, emd.result$tt, max.sift=max.sift, stoprule=stop.rule, tol=tol,
+     boundary=boundary,sm=sm,spar=spar,
+     check=FALSE, plot.imf=FALSE,max.imf=max.imf)
+     if(emd.res.tmp$nimf > 0) {
+        emd.result$nimf <- emd.result$nimf + emd.res.tmp$nimf
+        emd.result$imf  <- cbind(emd.result$imf, pracma::cumtrapz(emd.result$tt, emd.res.tmp$imf))
+        emd.result$residue <- pracma::cumtrapz(emd.result$tt, emd.res.tmp$residue) + remainder
+     }
+
+     return(emd.result)
+}
+
+EEMD <-function(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = TRUE, complete.residue = TRUE, spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200, stop.rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL, noise.type = "gaussian", noise.array = NULL) 
 {
 	#Performs the Ensemble Empirical Mode Decomposition as described in Huang and Wu (2008) A Review on the Hilbert Huang Transform Method and its Applications to Geophysical Studies
 	#It runs EMD on a given signal for N=TRIALS
@@ -229,6 +280,7 @@ EEMD <-function(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = T
         #   NIMF is the number of IMFs to be saved, IMFs past this number will be discarded
         #   TRIALS.DIR is the directory in which to put the EMD runs, if NULL, make a directory called "trials".  If TRIALS.DIR does not already exist, make it.
         #   VERBOSE - if TRUE, print progress
+        #   COMPLETE.RESIDUE - Ensure that residue is monotonic or single extremum
         #   SPECTRAL.METHOD defines how to calculate instantaneous frequency - whether to use the arctangent of the analytic signal with numeric differentiation ("arctan")  
         #   or the result of the chain rule applied to the arctangent, then numerically differentiated ("chain"); chain is dangerous at high frequencies
         #   DIFF.LAG specifies if you want to do naive differentiation (DIFF.LAG = 1), central difference method (DIFF.LAG = 2) or higher difference methods (DIFF.LAG > 2)
@@ -289,7 +341,7 @@ EEMD <-function(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = T
                     noise <- noise.array[j, ]
                 }
 		tmpsig=sig+noise
-		emd.result=Sig2IMF(tmpsig,tt, spectral.method = spectral.method, diff.lag = diff.lag, 
+		emd.result=Sig2IMF(tmpsig,tt, complete.residue = complete.residue, spectral.method = spectral.method, diff.lag = diff.lag, 
                    tol = tol, max.sift = max.sift, stop.rule = stop.rule, boundary = boundary, 
                    sm = sm, smlevels = smlevels, spar = spar, max.imf = max.imf, interm = interm)
 		emd.result$noise=noise
@@ -402,7 +454,7 @@ EEMDCompile<-function(trials.dir, trials, nimf)
         invisible(EEMD.result)
 }
 
-EEMDResift <- function(EEMD.result, resift.rule, spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200, stop.rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL)
+EEMDResift <- function(EEMD.result, resift.rule, complete.residue = TRUE, spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200, stop.rule = "type5", boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL)
 {
 	#Resifts averaged IMFs generated by EEMD to generate valid IMFs for Hilbert Transform
 	#INPUTS
@@ -413,6 +465,7 @@ EEMDResift <- function(EEMD.result, resift.rule, spectral.method = "arctan", dif
         #       If resift.rule is "max.var", return the IMF with the most variance
         #       If resift.rule is "all", get all the IMFs returned by rerunning EMD on the averaged IMFs made by EEMD.
 	#	This will likely be quite large.
+        #       COMPLETE.RESIDUE - Ensure that residue is monotonic or single extremum
         #       SPECTRAL.METHOD defines how to calculate instantaneous frequency - whether to use the arctangent of the analytic signal with numeric differentiation ("arctan")  
         #       or the result of the chain rule applied to the arctangent, then numerically differentiated ("chain"); chain is dangerous at high frequencies
         #       DIFF.LAG specifies if you want to do naive differentiation (DIFF.LAG = 1), central difference method (DIFF.LAG = 2) or higher difference methods (DIFF.LAG > 2)
@@ -448,7 +501,7 @@ EEMDResift <- function(EEMD.result, resift.rule, spectral.method = "arctan", dif
 	{
 		if(sum(EEMD.result$averaged.imfs[,k]==0)!=length(EEMD.result$averaged.imfs[,k]))
 		{
-			emd.result=Sig2IMF(EEMD.result$averaged.imfs[,k], EEMD.result$tt, spectral.method = spectral.method, diff.lag = diff.lag,
+			emd.result=Sig2IMF(EEMD.result$averaged.imfs[,k], EEMD.result$tt, complete.residue = complete.residue, spectral.method = spectral.method, diff.lag = diff.lag,
                             tol = tol, max.sift = max.sift, stop.rule = stop.rule, boundary = boundary,
                             sm = sm, smlevels = smlevels, spar = spar, max.imf = max.imf, interm = interm)
 			if(is.numeric(resift.rule))
@@ -553,16 +606,7 @@ Sig2IMF <- function(sig, tt, complete.residue = TRUE, spectral.method = "arctan"
         check=FALSE, plot.imf=FALSE,max.imf=max.imf)
 
     if(complete.residue) { #Calculate derivative of residual
-        diff.res <- -Im(fft(fft(emd.result$residue) * complex(real = 0, imaginary = -1), inverse = TRUE))/length(sig) #This is wrong
-        remainder <- mean(emd.result$residue)
-        emd.res.tmp <- EMD::emd(diff.res, tt, max.sift=max.sift, stoprule=stop.rule, tol=tol,
-        boundary=boundary,sm=sm,spar=spar,
-        check=FALSE, plot.imf=FALSE,max.imf=max.imf)
-        if(emd.res.tmp$nimf > 0) {
-            emd.result$nimf <- emd.result$nimf + emd.res.tmp$nimf
-            emd.result$imf  <- cbind(emd.result$imf, pracma::cumtrapz(tt, emd.res.tmp$imf))
-            emd.result$residue <- pracma::cumtrapz(tt, emd.res.tmp$residue) + remainder
-        }
+        emd.result <- DecomposeResidue(emd.result)
     }
     stop("incomplete!")
     emd.result$original.signal=sig

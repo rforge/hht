@@ -16,3 +16,5 @@ Added appropriate citation
 
 2.1.3
 Put an option to not plot and just return image matrix for FTGramImage and HHGramImage.
+Added the option to ensure that the residue of EMD has at most one extremum, default is to enable this option.
+

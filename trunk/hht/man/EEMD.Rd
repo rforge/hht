@@ -6,8 +6,8 @@ This function performs ensemble empirical mode decomposition (EEMD).
 }
 \usage{
 EEMD(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = TRUE, 
-    spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200,
-    stop.rule = "type5", boundary = "wave", sm = "none",
+    complete.residue = TRUE, spectral.method = "arctan", diff.lag = 1, tol = 5, 
+    max.sift = 200, stop.rule = "type5", boundary = "wave", sm = "none",
     smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL, 
     noise.type = "gaussian", noise.array = NULL)
 }
@@ -18,7 +18,8 @@ EEMD(sig, tt, noise.amp, trials, nimf, trials.dir = NULL, verbose = TRUE,
 \item{trials}{Number of times to run EMD}
 \item{nimf}{Number of IMFs to record, IMFs past this number will not be saved}
 \item{trials.dir}{Directory where EEMD trial files will be stored, defaults to ``trials.''  This will create a directory if none exists.}
-\item{verbose}{If TRUE, notify when each trial is complete}
+\item{verbose}{If \code{TRUE}, notify when each trial is complete}
+\item{complete.residue}{If \code{TRUE}, ensure that the residue has at most one extremum}
 \item{spectral.method}{See \code{\link{Sig2IMF}}.}
 \item{diff.lag}{See \code{\link{Sig2IMF}}.}
 \item{tol}{See \code{\link{Sig2IMF}}.}

@@ -6,14 +6,16 @@ This function wraps the \code{emd} function in the \code{EMD} package.
 \code{Sig2IMF} is used in \code{\link{EEMD}} and others.
 }
 \usage{
-Sig2IMF(sig, tt, spectral.method = "arctan", diff.lag = 1, stop.rule = "type5", 
-    tol = 5, boundary = "wave", sm = "none", smlevels = c(1), spar = NULL, 
-    max.sift = 200, max.imf = 100, interm = NULL)
+Sig2IMF(sig, tt, complete.residue = TRUE, spectral.method = "arctan", 
+    diff.lag = 1, stop.rule = "type5", tol = 5, boundary = "wave", 
+    sm = "none", smlevels = c(1), spar = NULL, max.sift = 200, 
+    max.imf = 100, interm = NULL)
 }
 
 \arguments{
 \item{sig}{a time series to be decomposed (vector)}
 \item{tt}{A vector of sample times for \code{sig}}
+\item{complete.residue}{If \code{TRUE}, ensure that the residue has at most one extremum}
 \item{spectral.method}{defines how to calculate instantaneous frequency - whether to use the arctangent of the analytic signal with numeric differentiation (``arctan'')
     or the result of the chain rule applied to the arctangent, then numerically differentiated ("chain");  see \code{\link{InstantaneousFrequency}}.}
 \item{diff.lag}{specifies if you want to do naive differentiation (\code{diff.lag} = 1), central difference method (\code{diff.lag = 2} or higher difference methods (\code{diff.lag} > 2) 
@@ -40,6 +42,7 @@ This function configures and performs empirical mode decomposition using the \co
 \value{ 
 \item{emd.result}{The intrinsic mode functions (IMFs), instantaneous frequencies, and instantaneous amplitudes of \code{sig}.}
 }
+
 \references{
 Kim, D., Kim, K. and Oh, H.-S. (2012) Extending the scope of empirical mode decomposition by smoothing.
 \emph{EURASIP Journal on Advances in Signal Processing}, \bold{2012}, 168.
@@ -53,6 +56,12 @@ Society London A}, \bold{454}, 903--995.
 Huang, N. E. and Wu Z. A. (2008) A review on Hilbert-Huang Transform: Method and its applications to geophysical studies.
 \emph{Reviews of Geophysics}, \bold{46}, RG2006.
 }
+
+\note{The option to decompose the residue into a time series with at most one extremum (\code{complete.residue = TRUE}) may introduce
+some numerical error into the result because of successive discrete differetiation and integration.
+Thus, the original signal may not be recovered exactly by summing the IMF set and the residual.}
+\author{Daniel C. Bowman \email{daniel.bowman@unc.edu}}
+
 
 \seealso{
 \code{\link{EEMD}}, \code{\link{PlotIMFs}}

@@ -5,7 +5,7 @@
 This function implements the complete ensemble empirical mode decomposition (CEEMD) algorithm.
 }
 \usage{
-CEEMD(sig, tt, noise.amp, trials, verbose = TRUE, 
+CEEMD(sig, tt, noise.amp, trials, verbose = TRUE, complete.residue = TRUE,
     spectral.method = "arctan", diff.lag = 1, tol = 5, max.sift = 200,
     stop.rule = "type5", boundary = "wave", sm = "none",
     smlevels = c(1), spar = NULL, max.imf = 100, interm = NULL, 
@@ -16,7 +16,8 @@ CEEMD(sig, tt, noise.amp, trials, verbose = TRUE,
 \item{tt}{The sample times of \code{sig}}
 \item{noise.amp}{Amplitude of white noise to use in denoising algorithm}
 \item{trials}{Number of times to run EMD}
-\item{verbose}{If TRUE, notify when each trial is complete}
+\item{verbose}{If \code{TRUE}, notify when each trial is complete}
+\item{complete.residue}{If \code{TRUE}, ensure that the residue has at most one extremum}
 \item{spectral.method}{See \code{\link{Sig2IMF}}.}
 \item{diff.lag}{See \code{\link{Sig2IMF}}.}
 \item{tol}{See \code{\link{Sig2IMF}}.}
