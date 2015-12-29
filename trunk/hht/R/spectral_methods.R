@@ -1,4 +1,4 @@
-EvolutiveFFT <- function(sig, dt, ft, freq.span, taper = 0.05)
+EvolutiveFFT <- function(sig, dt, ft, freq.span, taper = 0.05, detrend = TRUE)
 {
     #Calculates the evolutive Fourier spectrogram for use in FTSPEC.IMAGE
     #This code is modified the evolfft function in the RSEIS package.
@@ -11,6 +11,7 @@ EvolutiveFFT <- function(sig, dt, ft, freq.span, taper = 0.05)
     #       FT$NOV is the number of samples to overlap
     #    FREQ.SPAN is the frequency range to return
     #    TAPER is the percent taper applied to each window
+    #    DETREND is whether to detrend the signal
     #OUTPUTS
     #    RET is the spectrogram image
 
@@ -69,7 +70,11 @@ EvolutiveFFT <- function(sig, dt, ft, freq.span, taper = 0.05)
     for( i in m)
       {
         tem = sig[ibeg[i]:iend[i]]
-        tem = tem-mean(tem, na.rm=TRUE)
+        if(detrend) {
+           tem <- RSEIS::detrend(tem)
+        } else {
+            tem = tem-mean(tem, na.rm=TRUE)
+        }
         tem = spec.taper(tem, p = taper)
         tem =  c(tem,rep(0,krow-Ns))
         if(length(tem)<krow)
