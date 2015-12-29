@@ -4,23 +4,23 @@
 
 #Test vector
 
-v <- rep(0, 100)
-v[50] <- 10
+#v <- rep(0, 100)
+#v[50] <- 10
 
 #Construct Gaussian
-sigma <- 5
-mu <- 5
-g <- exp((-1 * (1:length(v) - mu)^2) / (2 * sigma^2))
+#sigma <- 5
+#mu <- 5
+#g <- exp((-1 * (1:length(v) - mu)^2) / (2 * sigma^2))
 
 
 #Convolve them
-v.conv <- convolve(v, g, type = "open")[(length(g)/2) : (1.5 * length(g))]
+#v.conv <- convolve(v, g, type = "open")[(length(g)/2) : (1.5 * length(g))]
 
-plot(v)
-lines(Re(v.conv), col = "red")
+#plot(v)
+#lines(Re(v.conv), col = "red")
 
-img <- array(rep(0, 100), dim = c(10, 10))
-img[5, 5] <- 10
+#img <- array(rep(0, 100), dim = c(10, 10))
+#img[5, 5] <- 10
 
 FTGramImage <- function(sig, dt, ft, time.span = NULL, freq.span = NULL, amp.span = NULL, blur = NULL, taper = 0.05, scaling = "none", grid=TRUE, colorbar=TRUE, backcol=c(0, 0, 0), colormap=NULL, pretty=FALSE, plot = TRUE, ...)
 {
@@ -105,10 +105,11 @@ FTGramImage <- function(sig, dt, ft, time.span = NULL, freq.span = NULL, amp.spa
              amp.span = c(min(ev$z[ev$z>-Inf]), max(ev$z[ev$z<Inf]))
         }
         img.xvec = ev$x + time.span[1]
-        img.yvec = seq(freq.span[1], freq.span[2], by = ev$y[2] - ev$y[1])
-        img = list(z = array(0, dim = c(length(img.xvec), length(img.yvec))),
-              x = img.xvec, y = img.yvec)
-        img$z[,img.yvec >= min(ev$y) & img.yvec <= max(ev$y)] = ev$z[,ev$y >= freq.span[1] & ev$y <= freq.span[2]]
+        img.yvec = ev$y[ev$y >= freq.span[1] & ev$y <= freq.span[2]]
+        img = list(
+              x = img.xvec,
+              y = img.yvec,
+              z = ev$z[,ev$y >= freq.span[1] & ev$y <= freq.span[2]])
 
         if(scaling == "ln") #Scale by natural log
         {
