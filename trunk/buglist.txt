@@ -1,1 +1,2 @@
 CombineTrials fails when copy = FALSE
+Add documentation for variable tt in FTGramImage
