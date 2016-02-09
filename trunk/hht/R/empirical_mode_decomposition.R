@@ -608,7 +608,7 @@ Sig2IMF <- function(sig, tt, complete.residue = TRUE, spectral.method = "arctan"
     if(complete.residue) { #Calculate derivative of residual
         emd.result <- DecomposeResidue(emd.result)
     }
-    stop("incomplete!")
+    #stop("incomplete!")
     emd.result$original.signal=sig
     emd.result$tt=tt
     emd.result$max.sift = max.sift
