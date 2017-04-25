@@ -354,6 +354,11 @@ HHGramImage <- function(hgram,time.span = NULL,freq.span = NULL, amp.span = NULL
         #     TRACE is the time series being shown
 
         opts = list(...)
+
+        #Plot as frequency or period
+        if(!"period" %in%  names(opts)) {
+            opts$period <- FALSE
+        }
  
         if(!"img.x.lab" %in% names(opts))
         {
@@ -818,7 +823,11 @@ HHTPackagePlotter <- function(img, trace, amp.span, img.x.lab, img.y.lab, blur =
     #        OPTS$PRETTY.Y.N is the number of pretty divisions on the Y axis
 
     #Configure parameters
-    
+   
+    if(!"period" %in% names(opts)) {
+        opts$period <- "FALSE"
+    }
+ 
     if(!"trace.format" %in% names(opts))
     {
         opts$trace.format = "%.1e"
@@ -883,16 +892,28 @@ HHTPackagePlotter <- function(img, trace, amp.span, img.x.lab, img.y.lab, blur =
     if(pretty)
     {   #Get nice divisions
         pretty.x = pretty(img$x, n=opts$pretty.x.n)
-        pretty.y = pretty(img$y, n=opts$pretty.y.n) 
+        if(opts$period) {
+            pretty.y <- pretty(1/img$y, n=opts$pretty.y.n)
+        } else {
+            pretty.y = pretty(img$y, n=opts$pretty.y.n) 
+        }
         #pretty.x = pretty.x[pretty.x <= max(img$x) & pretty.x >= min(img$x)]
         #pretty.y = pretty.y[pretty.y <= max(img$y) & pretty.y >= min(img$y)]
         if(!is.null(window))
         {
              window = window * ((max(img$x) - min(img$x))/(max(pretty.x) - min(pretty.x)))
         }
-        img$z = img$z[img$x <= max(pretty.x) & img$x >= min(pretty.x), img$y <= max(pretty.y) & img$y >= min(pretty.y)]
+        if(opts$period) {
+            img$z = img$z[img$x <= max(pretty.x) & img$x >= min(pretty.x), img$y <= max(1/pretty.y) & img$y >= min(1/pretty.y)]
+        } else { 
+            img$z = img$z[img$x <= max(pretty.x) & img$x >= min(pretty.x), img$y <= max(pretty.y) & img$y >= min(pretty.y)]
+        }
         img$x = img$x[img$x <= max(pretty.x) & img$x >= min(pretty.x)]
-        img$y = img$y[img$y <= max(pretty.y) & img$y >= min(pretty.y)]
+        if(opts$period) {
+            img$y = img$y[img$y <= max(1/pretty.y) & img$y >= min(1/pretty.y)]
+        } else {
+            img$y = img$y[img$y <= max(pretty.y) & img$y >= min(pretty.y)]
+        }
         img.x.labels=sprintf(opts$img.x.format, pretty.x)
         img.y.labels=sprintf(opts$img.y.format, pretty.y)
         trace$sig = trace$sig[trace$tt >= min(pretty.x) & trace$tt<= max(pretty.x)]
@@ -901,8 +922,12 @@ HHTPackagePlotter <- function(img, trace, amp.span, img.x.lab, img.y.lab, blur =
     }    
     else 
     {    
-       img.x.labels=sprintf(opts$img.x.format, seq(min(img$x), max(img$x), length.out = 10))
-       img.y.labels=sprintf(opts$img.y.format, seq(min(img$y), max(img$y), length.out=5))
+       img.x.labels=sprintf(opts$img.x.format, seq(min(img$x), max(img$x), length.out = 11))
+       if(opts$period) {
+           img.y.labels=sprintf(opts$img.y.format, 1/seq(min(img$y), max(img$y), length.out=5))
+       } else {
+           img.y.labels=sprintf(opts$img.y.format, seq(min(img$y), max(img$y), length.out=5))
+       }
     }    
 
     if(is.null(colormap))
